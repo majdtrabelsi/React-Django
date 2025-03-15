@@ -1,0 +1,4 @@
+.DS_Store
+backend/env
+package.json
+package-lock.json
