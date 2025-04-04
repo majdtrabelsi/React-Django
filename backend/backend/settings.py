@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     'accounts',
     'corsheaders',
     'rest_framework',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -63,8 +64,10 @@ EMAIL_HOST_USER = 'your-email@example.com'  # Replace with your email
 EMAIL_HOST_PASSWORD = 'your-email-password'  # Replace with your email password or app password
 
 REST_FRAMEWORK = {
+    'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
     'DEFAULT_RENDERER_CLASSES': [
         'rest_framework.renderers.JSONRenderer',
+        
     ],
     'DEFAULT_AUTHENTICATION_CLASSES': [
         'rest_framework.authentication.SessionAuthentication',

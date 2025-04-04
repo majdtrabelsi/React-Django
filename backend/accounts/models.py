@@ -42,34 +42,7 @@ class Profile(models.Model):
 
 # partie el cv 
 
-class Experience(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    title = models.CharField(max_length=255)
-    start_date = models.DateField()
-    end_date = models.DateField(null=True, blank=True)
-    description = models.TextField()
 
-    def __str__(self):
-        return f"{self.job_title} at {self.company}"
-
-class Education(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    school_name = models.CharField(max_length=255)
-    degree = models.CharField(max_length=255)
-    start_date = models.DateField()
-    end_date = models.DateField()
-    description = models.TextField()
-
-    def __str__(self):
-        return f"{self.degree} from {self.school_name}"
-
-class Skill(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    skill_name = models.CharField(max_length=255)
-    proficiency_level = models.CharField(max_length=100)
-
-    def __str__(self):
-        return self.skill_name
 
 class Interest(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -85,6 +58,73 @@ class Award(models.Model):
 
     def __str__(self):
         return self.award_name
+    
+
+
+# offers/models.py
+
+# models.py
+
+class Offer(models.Model):
+    user_name=models.CharField(max_length=255)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+
+    def __str__(self):
+        return self.title
+
+
+class Portfolio(models.Model):
+    user_name=models.CharField(max_length=255)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+
+    def __str__(self):
+        return self.title
+
+
+
+
+from django.db import models
+
+class Experience(models.Model):
+    user_name = models.CharField(max_length=255)
+    title = models.CharField(max_length=255)
+    description = models.TextField()
+    start_date_ex = models.DateField(null=True, blank=True)  # Optional start date
+    end_date_ex = models.DateField(null=True, blank=True)    # Optional end date
+
+    def __str__(self):
+        return self.title
+
+
+
+
+from django.db import models
+
+class Education(models.Model):
+    user_name = models.CharField(max_length=255)
+    school_name = models.CharField(max_length=255)
+    degree = models.CharField(max_length=255)
+    description_ed = models.TextField(max_length=255)
+    start_date_ed = models.DateField(null=True, blank=True)  # Optional start date
+    end_date_ed = models.DateField(null=True, blank=True)    # Optional end date
+
+    def __str__(self):
+        return self.degree
+
+
+
+
+from django.db import models
+
+class Skill(models.Model):
+    user_name = models.CharField(max_length=255)
+    skill_name = models.CharField(max_length=255)
+    proficiency = models.CharField(max_length=100)
+
+    def __str__(self):
+        return self.skill_name
 
 class SocialMediaLink(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)

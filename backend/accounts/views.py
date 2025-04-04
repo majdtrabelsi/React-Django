@@ -255,30 +255,6 @@ class ProfileViewSet(viewsets.ModelViewSet):
 
 
 
-class ExperienceCreateView(APIView):
-    def post(self, request):
-        serializer = ExperienceSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class EducationCreateView(APIView):
-    def post(self, request):
-        serializer = EducationSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-class SkillCreateView(APIView):
-    def post(self, request):
-        serializer = SkillSerializer(data=request.data)
-        if serializer.is_valid():
-            serializer.save(user=request.user)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
 class InterestCreateView(APIView):
     def post(self, request):
         serializer = SkillSerializer(data=request.data)
@@ -294,8 +270,125 @@ class AwardCreateView(APIView):
             serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
 
 
+
+
+
+from django.contrib.auth import get_user_model
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
+from rest_framework.permissions import AllowAny  # Allow access for everyone
+
+class UserCompanyView(APIView):
+    permission_classes = [AllowAny]  # Allow access to anyone, including unauthenticated users
+
+    def get(self, request):
+        logged_in_user = request.user
+
+        # Fetch all users from the database
+        users = User.objects.filter(type='company').exclude(id=logged_in_user.id)
+        # You can return specific fields like username, email, etc.
+        user_data = [{"id":user.id,  "firstname": user.firstname, "lastname": user.lastname} for user in users]
+        return Response(user_data, status=status.HTTP_200_OK)
+
+
+class UserPersonProView(APIView):
+    permission_classes = [AllowAny]  # Allow access to anyone, including unauthenticated users
+
+    def get(self, request):
+        # Fetch all users from the database
+        users = User.objects.filter(type__in=['personal', 'professional'])
+        # You can return specific fields like username, email, etc.
+        user_data = [{"id":user.id,"firstname": user.firstname, "lastname": user.lastname} for user in users]
+        return Response(user_data, status=status.HTTP_200_OK)
+    
+
+
+
+
+# offers/views.py# views.py
+from rest_framework import viewsets
+from .models import Offer
+from .serializers import OfferSerializer
+from django_filters.rest_framework import DjangoFilterBackend
+
+class OfferViewSet(viewsets.ModelViewSet):
+    queryset = Offer.objects.all()
+    serializer_class = OfferSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ['user_name']  # Allow filtering by 'user_name'
+
+
+
+
+
+
+
+# views.py
+from django.shortcuts import render, redirect
+from .models import Offer
+from .forms import OfferForm
+
+def offer_list_create(request):
+    # Check if the form was submitted
+    if request.method == "POST":
+        form = OfferForm(request.POST)
+        if form.is_valid():
+            form.save()
+            return redirect('offer_list_create')  # Redirect to avoid re-submission on refresh
+    else:
+        form = OfferForm()
+
+    # Fetch all offers from the database
+    offers = Offer.objects.filter(user_name=request.user)
+
+    # Render the template with the form and the list of offers
+    return render(request, 'offer_list_create.html', {'form': form, 'offers': offers})
+
+
+
+# accounts/views.py
+from .models import Portfolio
+from .serializers import PortfolioSerializer
+
+class PortfolioViewSet(viewsets.ModelViewSet):
+    serializer_class = PortfolioSerializer
+    queryset = Portfolio.objects.all()
+
+    
+
+from .models import Experience
+from .serializers import ExperienceSerializer
+
+class ExperienceViewSet(viewsets.ModelViewSet):
+    serializer_class = ExperienceSerializer
+    queryset = Experience.objects.all()
+    
+
+
+from .models import Education
+from .serializers import EducationSerializer
+
+class EducationViewSet(viewsets.ModelViewSet):
+    serializer_class = EducationSerializer
+    queryset = Education.objects.all()
+    
+
+
+
+from rest_framework import viewsets
+from .models import Skill
+from .serializers import SkillSerializer
+
+class SkillViewSet(viewsets.ModelViewSet):
+    queryset = Skill.objects.all()
+    serializer_class = SkillSerializer
+
+    
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])

@@ -7,6 +7,7 @@ import heroImage from '../../../assets/images/team-2.jpg';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faPhone , faGear } from '@fortawesome/free-solid-svg-icons'
 import { faLinkedin } from '@fortawesome/free-brands-svg-icons';
+import axios from 'axios';
 
 
 function Cv (){
@@ -28,6 +29,32 @@ function Cv (){
       }, []);
     
       const photoUrl = userProfile ? userProfile.photo : heroImage;
+
+
+
+
+
+
+
+
+    const [experiences, setExperiences] = useState([]);
+
+      useEffect(() => {
+        axios.get('http://127.0.0.1:8000/api/accounts/api/experiences/')
+          .then(response => setExperiences(response.data))
+          .catch(error => console.error('Error fetching offers:', error));
+      }, []);
+
+
+    const [educations, setEducations] = useState([]);
+
+    useEffect(() => {
+    axios.get('http://127.0.0.1:8000/api/accounts/api/educations/')
+        .then(response => setEducations(response.data))
+        .catch(error => console.error('Error fetching offers:', error));
+    }, []);
+
+      
   return (
     
     <div className="container-xxl bg-white p-0">
@@ -98,20 +125,22 @@ function Cv (){
                     <h2 style={{ display: "inline", color:'black' }} className="mb-5">Experience :</h2>
                     
                 </div>
+                {experiences.map((experience) => (
+
                 <div style={{ marginTop: "50px" }} className="d-flex flex-column flex-md-row justify-content-between mb-5">
                     <div div className="flex-grow-1">
                         <div>
-                            <h3 style={{ display: 'inline',color:'#706767'  }} className="mb-0">hello</h3>
+                            <h3 style={{ display: 'inline',color:'#706767'  }} className="mb-0">{experience.title}</h3>
                         </div>
                         <div className="subheading mb-3">
 
                         
-                            <p>hi hello</p>
+                            <p>{experience.description}</p>
                         </div>
                         
                     </div>
                     <div className="flex-shrink-0">
-                        <span style={{ marginLeft: "0px" }} className="text-primary"> - Present</span>
+                        <span style={{ marginLeft: "0px" }} className="text-primary">  {experience.start_date_ex} - {experience.end_date_ex}</span>
                         <a style={{ marginLeft: "30px", color: "#FFBF00" }} href="update_experience.php">
                             <i className="fas fa-user-edit fa-"></i>
                         </a>
@@ -119,7 +148,7 @@ function Cv (){
                             <i className="fas fa-trash-alt fa-"></i>
                         </a>
                     </div>
-                </div>
+                </div>))}
                 
             </div>
         </section>
@@ -129,20 +158,25 @@ function Cv (){
                     <h2 style={{ display: "inline" ,color:'black' }} className="mb-5">Education :</h2>
                     
                 </div>
+                {educations.map((education) => (
+
                 <div style={{ marginTop: "50px" }} className="d-flex flex-column flex-md-row justify-content-between mb-5">
                     <div div className="flex-grow-1">
                         <div>
-                            <h3 style={{ display: "inline", color:'#706767' }} className="mb-0">hello</h3>
+                            <h3 style={{ display: "inline", color:'#706767' }} className="mb-0">{education.school_name}</h3>
+                        </div>
+                        <div>
+                            <h4 style={{ display: "inline", color:'#706767' }} className="mb-0">{education.degree}</h4>
                         </div>
                         <div className="subheading mb-3">
 
                         
-                            <p>hi hello</p>
+                            <p>{education.description_ed}</p>
                         </div>
                         
                     </div>
                     <div className="flex-shrink-0">
-                        <span style={{ marginLeft: "0px" }} className="text-primary"> - Present</span>
+                        <span style={{ marginLeft: "0px" }} className="text-primary">  {education.start_date_ed} - {education.end_date_ed}</span>
                         <a style={{ marginLeft: "30px", color: "#FFBF00" }} href="update_experience.php">
                             <i className="fas fa-user-edit fa-"></i>
                         </a>
@@ -150,7 +184,7 @@ function Cv (){
                             <i className="fas fa-trash-alt fa-"></i>
                         </a>
                     </div>
-                </div>
+                </div>))}
                 
             </div>
         </section>

@@ -1,5 +1,4 @@
 import HeroSection  from './components/index';
-import Footer  from './components/footer';
 import Contact  from './components/contact';
 import Sign_up  from './components/sign_up';
 import Sign_up_person  from './components/sign_up_person';
@@ -20,6 +19,8 @@ import Index_company  from './components/user/company/index.js';
 import List_person  from './components/user/company/List_person.js';
 import Offers_company  from './components/user/company/Offers_company.js';
 import List_Companys  from './components/user/company/List_company.js';
+import Profile_company  from './components/user/company/profile.js';
+
 
 
 
@@ -59,6 +60,8 @@ function App() {
         <Route path="/List-person" element={<List_person/>} />
         <Route path="/Offers-company" element={<Offers_company/>} />
         <Route path="/List-companys" element={<List_Companys/>} />
+        <Route path="/Profile-company" element={<Profile_company/>} />
+
 
 
 
@@ -70,6 +73,5 @@ function App() {
 }
 
 export default App;
-
 
 
