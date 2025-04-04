@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
-from .models import ContactMessage,Profile,Experience, Education, Skill, Interest, Award
+from .models import ContactMessage,Profile, Education, Skill, Interest, Award
 
 User = get_user_model()
 
@@ -111,20 +111,8 @@ class ProfileSerializer(serializers.ModelSerializer):
         fields = ['name', 'photo']
 
 
-class ExperienceSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Experience
-        fields = '__all__'
 
-class EducationSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Education
-        fields = '__all__'
 
-class SkillSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Skill
-        fields = '__all__'
 
 class InterestSerializer(serializers.ModelSerializer):
     class Meta:
@@ -135,3 +123,59 @@ class AwardSerializer(serializers.ModelSerializer):
     class Meta:
         model = Award
         fields = '__all__'
+
+
+
+from django.contrib.auth.models import User
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ['firstname' ,'lastname']  # Add any fields you need
+
+
+
+
+
+# offers/serializers.py
+# serializers.py
+from rest_framework import serializers
+from .models import Offer
+
+class OfferSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Offer
+        fields = ['id','user_name','title', 'description']
+
+
+from .models import Portfolio
+
+class PortfolioSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Portfolio
+        fields = ['id','user_name','title', 'description']
+
+
+from .models import Experience
+
+class ExperienceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Experience
+        fields = ['id','user_name','title', 'description', 'start_date_ex', 'end_date_ex' ]
+
+
+
+
+class EducationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Education
+        fields = ['id', 'user_name', 'school_name', 'degree', 'description_ed', 'start_date_ed', 'end_date_ed']
+
+
+
+class SkillSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Skill
+        fields = ['id', 'user_name', 'skill_name', 'proficiency' ]
+
+

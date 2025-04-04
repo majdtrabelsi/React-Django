@@ -4,6 +4,32 @@ import {Link} from 'react-router-dom';
 import '../../../App.css';
 
 function Nav_person() {
+  const handleLogout = async () => {
+    try {
+      // First, get the CSRF token
+      const csrfRes = await fetch("http://localhost:8000/api/accounts/csrf/", {
+        credentials: "include",
+      });
+      const csrfData = await csrfRes.json();
+  
+      // Then, send the logout request with the CSRF token
+      const logoutRes = await fetch("http://localhost:8000/api/accounts/logout/", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "X-CSRFToken": csrfData.csrfToken,  // Include CSRF token
+        },
+      });
+  
+      if (logoutRes.ok) {
+        window.location.href = "/login"; // Redirect to login
+      } else {
+        console.error("Logout failed:", await logoutRes.json());
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
   return (
     <nav className="navbar navbar-expand-lg navbar-light px-4 px-lg-5 py-3 py-lg-0">
         <a href="index.php" className="navbar-brand p-0">
@@ -46,7 +72,7 @@ function Nav_person() {
           </div>
         </div>
         <div>
-          <a href="/login" className="btn btn-light rounded-pill text-primary py-2 px-4 ms-lg-5">Logout</a>
+          <a className="btn btn-light rounded-pill text-primary py-2 px-4 ms-lg-5" onClick={handleLogout}>Logout</a>
         </div>
       </div>
     </nav>

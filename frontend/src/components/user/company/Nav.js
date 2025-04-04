@@ -47,7 +47,7 @@ function Nav_company() {
       <div className="collapse navbar-collapse" id="navbarCollapse">
         <div className="navbar-nav ms-auto py-0">
           <Link to="/index-company" className="nav-item nav-link">Home</Link>
-          <Link to="/Profile-person" className="nav-item nav-link">Profile</Link>
+          <Link to="/Profile-company" className="nav-item nav-link">Profile</Link>
 
           
           <div className="nav-item dropdown">

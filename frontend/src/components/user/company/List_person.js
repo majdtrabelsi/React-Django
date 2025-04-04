@@ -1,15 +1,30 @@
-import React from 'react';
-import Nav_company from './Nav';
+import React, { useState, useEffect } from 'react';
 
+import Nav_company from './Nav';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import axios from 'axios';
 
 import { faFacebook, faLinkedin } from '@fortawesome/free-brands-svg-icons';
 import { faTwitter } from '@fortawesome/free-brands-svg-icons';
-import Team from '../../../assets/images/team-2.jpg';
+import Team from '../../../assets/images/team-1.jpg';
 
 
 
-function List_person(){
+function List_company(){
+
+    const [users, setUsers] = useState([]);
+
+    useEffect(() => {
+        // Make an API call to the Django backend to fetch users
+        axios.get('http://localhost:8000/api/accounts/api/personpro/')
+            .then(response => {
+                setUsers(response.data);
+            })
+            .catch(error => {
+                console.error('There was an error fetching the user data!', error);
+            });
+    }, []);
+
     return(
         <div className="container-xxl bg-white p-0">
       
@@ -17,7 +32,7 @@ function List_person(){
             <div className="container-xxl position-relative p-0">
                 <Nav_company/>
                 {/* Navbar (Replace with your navbar component) */}
-                <div className="container-xxl bg-primary page-header">
+                <div className="container-xxl bg-dark page-header">
                 <div className="container text-center">
                     <h1 className="text-white animated zoomIn mb-3">List_Person</h1>
                     <nav aria-label="breadcrumb">
@@ -33,7 +48,7 @@ function List_person(){
                         </a>
                         </li>
                         <li className="breadcrumb-item text-white active" aria-current="page">
-                            List_Person
+                            List_Company
                         </li>
                     </ol>
                     </nav>
@@ -58,25 +73,28 @@ function List_person(){
                     </div>
 
                     <div className="row g-4">
-                        <div  className="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
-                            <div className="team-item">
-                                <h5>Nidhal</h5>
-                                <p className="mb-4">Full stack</p>
-                                <img className="img-fluid rounded-circle w-100 mb-4" src={Team}  />
-                                <div className="d-flex justify-content-center">
-                                    <a className="btn btn-square text-primary bg-white m-1" >
-                                        <FontAwesomeIcon icon={faTwitter}  />
-                                    
-                                    </a>
-                                    <a className="btn btn-square text-primary bg-white m-1" >
-                                        <FontAwesomeIcon icon={faFacebook}  />
-                                    </a>
-                                    <a className="btn btn-square text-primary bg-white m-1">
-                                        <FontAwesomeIcon icon={faLinkedin}  />
-                                    </a>
+                        {users.map(user => (
+
+                            <div  className="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
+                                <div key={`${user.firstname}-${user.lastname}`} className="team-item">
+                                    <h5> {user.firstname} </h5>
+                                    <p className="mb-4"> {user.lastname} </p>
+                                    <img className="img-fluid rounded-circle w-100 mb-4" src={Team}  />
+                                    <div className="d-flex justify-content-center">
+                                        <a className="btn btn-square text-primary bg-white m-1" >
+                                            <FontAwesomeIcon icon={faTwitter}  />
+                                        
+                                        </a>
+                                        <a className="btn btn-square text-primary bg-white m-1" >
+                                            <FontAwesomeIcon icon={faFacebook}  />
+                                        </a>
+                                        <a className="btn btn-square text-primary bg-white m-1">
+                                            <FontAwesomeIcon icon={faLinkedin}  />
+                                        </a>
+                                    </div>
                                 </div>
-                            </div>
-                        </div>
+                            </div>        ))}
+
                     
                     </div>
                 </div>
@@ -85,4 +103,4 @@ function List_person(){
     );
 }
 
-export default List_person;
+export default List_company;
