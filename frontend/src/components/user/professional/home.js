@@ -22,7 +22,7 @@ function ProAccountPage() {
                   if (data && !data.isAuthenticated) {
                       navigate('/');
                   }
-                  else if (data.isAuthenticated && data.userType != 'professional' ){
+                  else if (data.isAuthenticated && data.userType !== 'professional' ){
                       navigate('/login');
                   }
                   setIsLoading(false);

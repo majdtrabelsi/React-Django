@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model, authenticate, login, logout
-from rest_framework import status
+from rest_framework import status,permissions,viewsets,serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -9,17 +9,21 @@ from .serializers import (
     UserRegistrationPerSerializer,
     UserRegistrationCompSerializer,
     ProfileSerializer,
+    ExperienceSerializer,
     EducationSerializer,
     SkillSerializer,
     InterestSerializer,
     AwardSerializer,
+    SocialMediaLinkSerializer,
 )
-from .models import Profile, Education, Skill, Interest, Award
+from .models import Profile, Experience, Education, Skill, Interest, Award, SocialMediaLink
 from rest_framework.parsers import MultiPartParser, FormParser
 from rest_framework import generics
 import logging
 from django.middleware.csrf import get_token
 from django.http import JsonResponse
+from rest_framework.decorators import api_view, permission_classes
+
 
 logger = logging.getLogger(__name__)
 
@@ -171,7 +175,7 @@ class LogoutView(APIView):
 class UserStatusView(APIView):
     def get(self, request):
         if request.user.is_authenticated:
-            return Response({"isAuthenticated": True, "user": request.user.username, "userType": request.user.type})
+            return Response({"isAuthenticated": True, "user": request.user.email, "userType": request.user.type})
         return Response({"isAuthenticated": False}, status=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -228,11 +232,52 @@ def contact_form(request):
     else:
         return JsonResponse({'error': 'Invalid request method.'}, status=405)
 
+class ProfileViewSet(viewsets.ModelViewSet):
+    serializer_class = ProfileSerializer
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_queryset(self):
+        return Profile.objects.filter(user=self.request.user)
+
+    def retrieve(self, request, *args, **kwargs):
+        profile, created = Profile.objects.get_or_create(user=request.user)
+        serializer = self.get_serializer(profile)
+        return Response(serializer.data)
+
+
+    def create(self, request, *args, **kwargs):
+        profile, created = Profile.objects.get_or_create(user=request.user)
+        serializer = self.get_serializer(profile, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            return Response
 
 
 
+class ExperienceCreateView(APIView):
+    def post(self, request):
+        serializer = ExperienceSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class EducationCreateView(APIView):
+    def post(self, request):
+        serializer = EducationSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+class SkillCreateView(APIView):
+    def post(self, request):
+        serializer = SkillSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save(user=request.user)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class InterestCreateView(APIView):
     def post(self, request):
@@ -249,129 +294,29 @@ class AwardCreateView(APIView):
             serializer.save(user=request.user)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-    
 
 
 
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def social_media_links(request):
+    user = request.user
+    try:
+        social_links = SocialMediaLink.objects.get(user=user)
+    except SocialMediaLink.DoesNotExist:
+        social_links = SocialMediaLink.objects.create(user=user)
 
+    if request.method == 'POST':
+        print("🔹 Received POST request:", request.data)  # Debugging
 
-from django.contrib.auth import get_user_model
-from rest_framework.views import APIView
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
-from rest_framework import status
-from rest_framework.permissions import AllowAny  # Allow access for everyone
+        serializer = SocialMediaLinkSerializer(social_links, data=request.data, partial=True)
+        if serializer.is_valid():
+            serializer.save()
+            print("Link updated successfully:", serializer.data)  # Debugging
+            return Response(serializer.data, status=status.HTTP_200_OK)
 
-class UserCompanyView(APIView):
-    permission_classes = [AllowAny]  # Allow access to anyone, including unauthenticated users
+        print("Serializer Errors:", serializer.errors)  # Debugging
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
-    def get(self, request):
-        logged_in_user = request.user
-
-        # Fetch all users from the database
-        users = User.objects.filter(type='company').exclude(id=logged_in_user.id)
-        # You can return specific fields like username, email, etc.
-        user_data = [{"id":user.id,  "firstname": user.firstname, "lastname": user.lastname} for user in users]
-        return Response(user_data, status=status.HTTP_200_OK)
-
-
-class UserPersonProView(APIView):
-    permission_classes = [AllowAny]  # Allow access to anyone, including unauthenticated users
-
-    def get(self, request):
-        # Fetch all users from the database
-        users = User.objects.filter(type__in=['personal', 'professional'])
-        # You can return specific fields like username, email, etc.
-        user_data = [{"id":user.id,"firstname": user.firstname, "lastname": user.lastname} for user in users]
-        return Response(user_data, status=status.HTTP_200_OK)
-    
-
-
-
-
-# offers/views.py# views.py
-from rest_framework import viewsets
-from .models import Offer
-from .serializers import OfferSerializer
-from django_filters.rest_framework import DjangoFilterBackend
-
-class OfferViewSet(viewsets.ModelViewSet):
-    queryset = Offer.objects.all()
-    serializer_class = OfferSerializer
-    filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ['user_name']  # Allow filtering by 'user_name'
-
-
-
-
-
-
-
-# views.py
-from django.shortcuts import render, redirect
-from .models import Offer
-from .forms import OfferForm
-
-def offer_list_create(request):
-    # Check if the form was submitted
-    if request.method == "POST":
-        form = OfferForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('offer_list_create')  # Redirect to avoid re-submission on refresh
-    else:
-        form = OfferForm()
-
-    # Fetch all offers from the database
-    offers = Offer.objects.filter(user_name=request.user)
-
-    # Render the template with the form and the list of offers
-    return render(request, 'offer_list_create.html', {'form': form, 'offers': offers})
-
-
-
-# accounts/views.py
-from .models import Portfolio
-from .serializers import PortfolioSerializer
-
-class PortfolioViewSet(viewsets.ModelViewSet):
-    serializer_class = PortfolioSerializer
-    queryset = Portfolio.objects.all()
-
-    
-
-from .models import Experience
-from .serializers import ExperienceSerializer
-
-class ExperienceViewSet(viewsets.ModelViewSet):
-    serializer_class = ExperienceSerializer
-    queryset = Experience.objects.all()
-    
-
-
-from .models import Education
-from .serializers import EducationSerializer
-
-class EducationViewSet(viewsets.ModelViewSet):
-    serializer_class = EducationSerializer
-    queryset = Education.objects.all()
-    
-
-
-
-from rest_framework import viewsets
-from .models import Skill
-from .serializers import SkillSerializer
-
-class SkillViewSet(viewsets.ModelViewSet):
-    queryset = Skill.objects.all()
-    serializer_class = SkillSerializer
-
-    
-
-from .models import Profile
-from .serializers import ProfileSerializer
-
-class ProfileViewSet(viewsets.ModelViewSet):
-    serializer_class = ProfileSerializer
-    queryset = Profile.objects.all()
+    serializer = SocialMediaLinkSerializer(social_links)
+    return Response(serializer.data)

@@ -1,20 +1,12 @@
+import React from 'react';
 import Nav_person from './nav';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faTwitch } from '@fortawesome/free-brands-svg-icons';
-import React, { useState , useEffect} from 'react';
-import axios from 'axios';
 
 import Team from '../../../assets/images/sony1.png';
 
 
 function Offers(){
-    const [offers, setOffers] = useState([]);
-    
-    useEffect(() => {
-        axios.get('http://127.0.0.1:8000/api/accounts/api/offers/')
-          .then(response => setOffers(response.data))
-          .catch(error => console.error('Error fetching offers:', error));
-      }, []);
     return(
         <div className="container-xxl bg-white p-0">
       
@@ -48,32 +40,29 @@ function Offers(){
             <div className="container-xxl py-6">
                 <div className="container">
                     
-                    
-                        <div    className="row g-4">
-                            {offers.map((offer) => (
-                                <div key={offer.id} className="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
-                                    <div className="service-item rounded h-100">
-                                        <div className="d-flex justify-content-between">
-                                            <div className="service-icon" >
-                                                <img  className="img-fluid rounded-circle w-100 "   />            
-                                                
-                                            </div>
-                                            <h2 style={{paddingTop:'10px'}}>{offer.title}</h2>
-                                            <a className="service-btn" href="">
-                                                <i className="fa fa-link fa-2x"> </i>
-                                            </a>
+                        <div className="row g-4">
+                        {/* Business Research Service */}
+                            <div className="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
+                                <div className="service-item rounded h-100">
+                                    <div className="d-flex justify-content-between">
+                                        <div className="service-icon" >
+                                            <img  className="img-fluid rounded-circle w-100 " src={Team}  />            
+                                            
                                         </div>
-                                        <div className="p-5">
-                                            <h5 className="mb-3"></h5>
-                                            <span>
-                                                {offer.description} 
-                                            </span>
-                                        </div>
+                                        <h2 style={{paddingTop:'10px'}}>Sony</h2>
+                                        <a className="service-btn" href="">
+                                            <i className="fa fa-link fa-2x"> </i>
+                                        </a>
+                                    </div>
+                                    <div className="p-5">
+                                        <h5 className="mb-3">Business Research</h5>
+                                        <span>
+                                            Erat ipsum justo amet duo et elitr dolor, est duo duo eos lorem sed diam stet diam sed stet lorem.
+                                        </span>
                                     </div>
                                 </div>
-                            ))}                    
+                            </div>
                     </div>
-
                 </div>
             </div>
         </div>           
