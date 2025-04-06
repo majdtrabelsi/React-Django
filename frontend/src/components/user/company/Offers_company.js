@@ -13,30 +13,29 @@ function Offer() {
   const [userName, setUserName] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [editingOfferId, setEditingOfferId] = useState(null); // Track the ID of the offer being edited
-
-  // Fetch user status
+  
   useEffect(() => {
     fetch('http://localhost:8000/api/accounts/accountstatus/', { credentials: 'include' })
       .then(response => response.json())
       .then(data => {
         if (data.isAuthenticated) {
           setIsAuthenticated(true);
-          setUserName(data.user);  // Assuming 'data.user' is the email or the desired user info
+          setUserName(data.user);
+  
+          // Fetch offers only for this user
+          axios.get(`http://127.0.0.1:8000/api/accounts/api/offers/?user_name=${data.user}`)
+            .then(response => setOffers(response.data))
+            .catch(error => console.error('Error fetching offers:', error));
         } else {
           setIsAuthenticated(false);
+          window.location.href = "./login";
         }
       })
       .catch(error => {
         console.error('Error fetching user status:', error);
       });
   }, []);
-
-  // Fetch offers
-  useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/accounts/api/offers/')
-      .then(response => setOffers(response.data))
-      .catch(error => console.error('Error fetching offers:', error));
-  }, []);
+  
 
   // Create a new offer
   const handleSubmit = async (e) => {
