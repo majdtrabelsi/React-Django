@@ -4,6 +4,8 @@ import { faCheck, faX, faPlus } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { faRocketchat } from '@fortawesome/free-brands-svg-icons';
+import { useNavigate } from 'react-router-dom';
 
 function Rqoffer() {
     const { id } = useParams();
@@ -33,35 +35,35 @@ function Rqoffer() {
             console.error('Error fetching user status:', error);
       });
   }, []);
-    const handleResponse = (id, action) => {
-    // Determine rp_offer based on the action
-        let rp_offerValue = '';
+    const handleResponse = (offerId, action) => {
+        let rp_offerValue = action === 'accept' ? 'accept' : 'refuse';
 
-        if (action === 'accept') {
-            rp_offerValue = 'accept';
-        } else if (action === 'refuse') {
-            rp_offerValue = 'refuse';
-        }
-
-        // Update rp_offer based on the action
         axios.patch(
-            `http://127.0.0.1:8000/api/accounts/api/rqoffers/${id}/`,
+            `http://127.0.0.1:8000/api/accounts/api/rqoffers/${offerId}/`,
             { rp_offer: rp_offerValue },
             {
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            withCredentials: true, // for session-auth
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                withCredentials: true,
             }
         )
         .then(response => {
-            console.log('Updated:', response.data);
-            // Optional: update UI to reflect the new status (e.g., refresh offers)
+            // Update local state: find the updated offer and replace its rp_offer
+            const updatedOffers = offers.map(offer => 
+                offer.id === offerId ? { ...offer, rp_offer: rp_offerValue } : offer
+            );
+            setOffers(updatedOffers); // Update state
         })
         .catch(error => {
             console.error('Error updating rp_offer:', error.response?.data || error.message);
         });
     };
+    const navigate = useNavigate();
+    
+        const goToChat = (id) => {
+            navigate(`/chat/${id}`);
+        };
     
 
   return (
@@ -85,6 +87,8 @@ function Rqoffer() {
                         <th scope="col">#</th>
                         <th scope="col">User</th>
                         <th scope="col">Action</th>
+                        <th scope="col">Statut</th>
+
                     </tr>
                     </thead>
                     <tbody>
@@ -94,34 +98,50 @@ function Rqoffer() {
                             <th scope="row">{index + 1}</th>
                             <td>{offer.name_person}</td>
                             <td>
-                            <FontAwesomeIcon 
-                                icon={faX} 
-                                style={{
-                                    color: 'red',
-                                    marginRight: '1em',
-                                    cursor: 'pointer',
-                                    padding: '10px',   // Added padding for a better clickable area
-                                    borderRadius: '5px',  // Rounded corners for better button styling
-                                    backgroundColor: '#f8d7da', // Light red background
-                                    transition: 'background-color 0.3s ease', // Smooth background color transition
-                                }} 
-                                onClick={() => handleResponse(offer.id, 'refuse')} 
-                            />
+                                {offer.rp_offer !== 'accept' && offer.rp_offer !== 'refuse' && (
+                                    <>
+                                    <FontAwesomeIcon 
+                                        icon={faX} 
+                                        style={{
+                                        color: 'red',
+                                        marginRight: '1em',
+                                        cursor: 'pointer',
+                                        padding: '10px',
+                                        borderRadius: '5px',
+                                        backgroundColor: '#f8d7da',
+                                        transition: 'background-color 0.3s ease',
+                                        }} 
+                                        onClick={() => handleResponse(offer.id, 'refuse')} 
+                                    />
 
-                            <FontAwesomeIcon 
-                                icon={faCheck} 
-                                style={{
-                                    color: 'green',
-                                    cursor: 'pointer',
-                                    padding: '10px',  // Added padding for a better clickable area
-                                    borderRadius: '5px', // Rounded corners for better button styling
-                                    backgroundColor: '#d4edda', // Light green background
-                                    transition: 'background-color 0.3s ease', // Smooth background color transition
-                                }} 
-                                onClick={() => handleResponse(offer.id, 'accept')} 
-                            />
-
+                                    <FontAwesomeIcon 
+                                        icon={faCheck} 
+                                        style={{
+                                        color: 'green',
+                                        cursor: 'pointer',
+                                        padding: '10px',
+                                        borderRadius: '5px',
+                                        backgroundColor: '#d4edda',
+                                        transition: 'background-color 0.3s ease',
+                                        }} 
+                                        onClick={() => handleResponse(offer.id, 'accept')} 
+                                    />
+                                    </>
+                                )}
                             </td>
+                            <td>
+                                {offer.rp_offer}
+                                    {offer.rp_offer === 'accept' && (
+                                        <button
+                                        
+                                            className="btn btn-sm btn-outline-primary ms-2"
+                                            onClick={() => goToChat(offer.id)}
+                                        >
+                                            <FontAwesomeIcon icon={faRocketchat} /> Chat
+                                        </button>
+                                    )}
+                            </td>
+
                         </tr>
                         ))
                     ) : (

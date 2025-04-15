@@ -80,3 +80,8 @@ class RqofferAdmin(admin.ModelAdmin):
 
 # Register the custom admin configuration
 admin.site.register(Rqoffer, RqofferAdmin)
+
+
+
+
+

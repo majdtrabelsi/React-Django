@@ -30,25 +30,44 @@ function Offers() {
   }, []);
 
   // Function to handle adding a new offer entry
-  const handleAddPerson = (offerId, companyName) => {
-    // Create the data to send in the POST request
-    const data = {
-      name_person: userName, // Set the logged-in user's name
-      name_company: companyName, // Set the company name from the offer
-      id_offer: offerId, // Set the offer ID from the offer
-      rp_offer:'',
-    };
+  const [message, setMessage] = useState('');
 
-    // Send the POST request to create a new Rqoffer
+  const handleAddPerson = (offerId, companyName) => {
+    const data = {
+      name_person: userName,
+      name_company: companyName,
+      id_offer: offerId,
+      rp_offer: '',
+    };
+  
     axios.post('http://127.0.0.1:8000/api/accounts/api/rqoffers/', data, { withCredentials: true })
       .then(response => {
         console.log('Offer added successfully:', response.data);
+        setMessage('✅ Offer submitted successfully!');
       })
       .catch(error => {
-        console.error('Error adding offer:', error);
+        if (
+          error.response &&
+          error.response.status === 400 &&
+          error.response.data &&
+          error.response.data.detail?.includes('unique') // or customize based on your backend error
+        ) {
+          setMessage('⚠️ You have already submitted an offer for this.');
+        } else {
+          console.error('Error adding offer:', error);
+          setMessage('⚠️ You have already submitted an offer for this.');
+
+        }
       });
   };
-
+  useEffect(() => {
+    if (message) {
+      const timer = setTimeout(() => setMessage(''), 4000);
+      return () => clearTimeout(timer);
+    }
+  }, [message]);
+  
+  
   return (
     <div className="container-xxl bg-white p-0">
       <div className="container-xxl position-relative p-0">
@@ -80,6 +99,12 @@ function Offers() {
       <div className="container-xxl py-6">
         <div className="container">
           <div className="row g-4">
+            {message && (
+              <div className="alert alert-info text-center" role="alert">
+                {message}
+              </div>
+            )}
+
             {offers.map((offer) => (
               <div key={offer.id} className="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
                 <div className="service-item rounded h-100">

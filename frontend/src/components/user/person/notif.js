@@ -1,9 +1,11 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import Nav from './nav';
-import { faCheck, faX, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faRocketchat } from '@fortawesome/free-brands-svg-icons';
+
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 function Rqoffer() {
     const { id } = useParams();
@@ -21,7 +23,7 @@ function Rqoffer() {
             setUserName(data.user);
     
             // Fetch offers only for this user
-            axios.get(`http://127.0.0.1:8000/api/accounts/api/rqoffers/?id_offer=${id}`)
+            axios.get(`http://127.0.0.1:8000/api/accounts/api/rqoffers/?name_person=${data.user}`)
                 .then(response => setOffers(response.data))
                 .catch(error => console.error('Error fetching offers:', error));
             } else {
@@ -63,6 +65,11 @@ function Rqoffer() {
         });
     };
     
+    const navigate = useNavigate();
+
+    const goToChat = (id) => {
+        navigate(`/chat/${id}`);
+    };
 
   return (
     <div className="container-xxl bg-white p-0">
@@ -84,52 +91,39 @@ function Rqoffer() {
                     <tr>
                         <th scope="col">#</th>
                         <th scope="col">User</th>
-                        <th scope="col">Action</th>
+                        <th scope="col">Company</th>
+                        <th scope="col">Result</th>
                     </tr>
                     </thead>
                     <tbody>
-                    {offers.length > 0 ? (
-                        offers.map((offer, index) => (
-                        <tr key={offer.id}>
-                            <th scope="row">{index + 1}</th>
-                            <td>{offer.name_person}</td>
-                            <td>
-                            <FontAwesomeIcon 
-                                icon={faX} 
-                                style={{
-                                    color: 'red',
-                                    marginRight: '1em',
-                                    cursor: 'pointer',
-                                    padding: '10px',   // Added padding for a better clickable area
-                                    borderRadius: '5px',  // Rounded corners for better button styling
-                                    backgroundColor: '#f8d7da', // Light red background
-                                    transition: 'background-color 0.3s ease', // Smooth background color transition
-                                }} 
-                                onClick={() => handleResponse(offer.id, 'refuse')} 
-                            />
+                        {offers.length > 0 ? (
+                            offers.map((offer, index) => (
+                            <tr key={offer.id}>
+                                <th scope="row">{index + 1}</th>
+                                <td>{offer.name_person}</td>
+                                <td>{offer.name_company}</td>
 
-                            <FontAwesomeIcon 
-                                icon={faCheck} 
-                                style={{
-                                    color: 'green',
-                                    cursor: 'pointer',
-                                    padding: '10px',  // Added padding for a better clickable area
-                                    borderRadius: '5px', // Rounded corners for better button styling
-                                    backgroundColor: '#d4edda', // Light green background
-                                    transition: 'background-color 0.3s ease', // Smooth background color transition
-                                }} 
-                                onClick={() => handleResponse(offer.id, 'accept')} 
-                            />
-
-                            </td>
-                        </tr>
-                        ))
-                    ) : (
-                        <tr>
-                        <td colSpan="3">No requests for this offer yet.</td>
-                        </tr>
-                    )}
+                                <td>
+                                {offer.rp_offer}
+                                {offer.rp_offer === 'accept' && (
+                                    <button
+                                    
+                                        className="btn btn-sm btn-outline-primary ms-2"
+                                        onClick={() => goToChat(offer.id)}
+                                    >
+                                        <FontAwesomeIcon icon={faRocketchat} /> Chat
+                                  </button>
+                                )}
+                                </td>
+                            </tr>
+                            ))
+                        ) : (
+                            <tr>
+                            <td colSpan="4">No requests for this offer yet.</td>
+                            </tr>
+                        )}
                     </tbody>
+
                 </table>
             </div>
 

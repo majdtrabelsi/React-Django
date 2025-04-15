@@ -149,3 +149,8 @@ class Rqoffer(models.Model):
 
     def __str__(self):
         return self.name_company
+    
+    class Meta:
+        constraints = [
+        models.UniqueConstraint(fields=['name_person', 'id_offer'], name='unique_person_offer')
+        ]
