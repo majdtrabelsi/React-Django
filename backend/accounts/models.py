@@ -136,3 +136,16 @@ class SocialMediaLink(models.Model):
     twitch = models.URLField(blank=True, null=True)
     def __str__(self):
         return f"{self.user.username}'s Social Media Links"
+
+
+
+
+class Rqoffer(models.Model):
+    name_person = models.CharField(max_length=255)
+    name_company = models.CharField(max_length=255)
+    id_offer = models.CharField(max_length=100)
+    rp_offer = models.CharField(max_length=100, blank=True, default="")
+    
+
+    def __str__(self):
+        return self.name_company

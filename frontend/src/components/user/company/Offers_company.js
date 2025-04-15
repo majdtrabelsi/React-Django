@@ -3,6 +3,8 @@ import Nav_company from './Nav';
 import { faWrench, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 function Offer() {
   const [showForm, setShowForm] = useState(false);
@@ -13,30 +15,29 @@ function Offer() {
   const [userName, setUserName] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [editingOfferId, setEditingOfferId] = useState(null); // Track the ID of the offer being edited
-
-  // Fetch user status
+  
   useEffect(() => {
     fetch('http://localhost:8000/api/accounts/accountstatus/', { credentials: 'include' })
       .then(response => response.json())
       .then(data => {
         if (data.isAuthenticated) {
           setIsAuthenticated(true);
-          setUserName(data.user);  // Assuming 'data.user' is the email or the desired user info
+          setUserName(data.user);
+  
+          // Fetch offers only for this user
+          axios.get(`http://127.0.0.1:8000/api/accounts/api/offers/?user_name=${data.user}`)
+            .then(response => setOffers(response.data))
+            .catch(error => console.error('Error fetching offers:', error));
         } else {
           setIsAuthenticated(false);
+          window.location.href = "./login";
         }
       })
       .catch(error => {
         console.error('Error fetching user status:', error);
       });
   }, []);
-
-  // Fetch offers
-  useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/accounts/api/offers/')
-      .then(response => setOffers(response.data))
-      .catch(error => console.error('Error fetching offers:', error));
-  }, []);
+  
 
   // Create a new offer
   const handleSubmit = async (e) => {
@@ -103,6 +104,9 @@ function Offer() {
       console.error('Error updating offer:', error);
     }
   };
+  const navigate = useNavigate();
+  const goToOfferPage = (id) => {
+    navigate(`/Rq-offer/${id}`);};
 
   return (
     <div className="container-xxl bg-white p-0">
@@ -114,6 +118,10 @@ function Offer() {
           </div>
         </div>
       </div>
+      <button> <Link to="/Rq-offer" className="dropdown-item">Rq Offer</Link></button>
+
+       <button> <Link to="/Offers-all" className="dropdown-item">All Offers</Link></button>
+      
 
       <div className="container-xxl py-6">
         <button style={{ marginBottom: '2em', marginLeft: '40em' }} onClick={handleClick}>
@@ -162,7 +170,14 @@ function Offer() {
                   <a onClick={() => handleEdit(offer)} className="service-btn bg-dark">
                     <FontAwesomeIcon icon={faWrench} size="2x" />
                   </a>
-                  <h2 style={{ paddingTop: '10px' }}>{offer.title}</h2>
+                  
+                  <h2
+                    style={{ paddingTop: '10px', cursor: 'pointer' }}
+                    onClick={() => goToOfferPage(offer.id)}
+                  >
+                    {offer.title}
+                  </h2>
+                  
                   <a onClick={() => handleDelete(offer.id)} className="service-btn">
                     <FontAwesomeIcon icon={faTrash} size="2x" />
                   </a>

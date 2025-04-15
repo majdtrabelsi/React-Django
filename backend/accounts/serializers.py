@@ -184,3 +184,14 @@ class SocialMediaLinkSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
+
+
+
+
+
+from .models import Rqoffer
+
+class RqofferSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rqoffer
+        fields = ['id', 'name_person', 'name_company', 'id_offer','rp_offer']

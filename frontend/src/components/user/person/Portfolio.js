@@ -16,29 +16,27 @@ function Portfolio() {
   const [editingPortfolio, setEditingPortfolio] = useState(null); // State to track portfolio being edited
 
   useEffect(() => {
-    axios
-      .get('http://127.0.0.1:8000/api/accounts/api/portfolios/')
-      .then((response) => setPortfolios(response.data))
-      .catch((error) => console.error('Error fetching portfolios:', error));
-  }, []);
-
-  useEffect(() => {
-    // Fetch user status when the component mounts
-    fetch('http://localhost:8000/api/accounts/accountstatus/', { credentials: 'include' })  // Assuming you use session authentication
+    fetch('http://localhost:8000/api/accounts/accountstatus/', { credentials: 'include' })
       .then(response => response.json())
       .then(data => {
         if (data.isAuthenticated) {
           setIsAuthenticated(true);
-          setUserName(data.user);  // Assuming 'data.user' is the email or the desired user info
+          setUserName(data.user);
+  
+          // Fetch offers only for this user
+          axios.get(`http://127.0.0.1:8000/api/accounts/api/portfolios/?user_name=${data.user}`)
+            .then(response => setPortfolios(response.data))
+            .catch(error => console.error('Error fetching offers:', error));
         } else {
           setIsAuthenticated(false);
+          window.location.href = "./login";
         }
       })
       .catch(error => {
         console.error('Error fetching user status:', error);
       });
   }, []);
-
+  
   // Handle submit for both create and update actions
   const handleSubmit = (e) => {
     e.preventDefault();  // Prevent default form submission
