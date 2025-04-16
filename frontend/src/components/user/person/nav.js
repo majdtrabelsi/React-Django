@@ -2,6 +2,8 @@
 import React from 'react';
 import {Link} from 'react-router-dom';
 import '../../../App.css';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faBell} from '@fortawesome/free-solid-svg-icons';
 
 function Nav_person() {
   const handleLogout = async () => {
@@ -31,7 +33,7 @@ function Nav_person() {
     }
   };
   return (
-    <nav className="navbar navbar-expand-lg navbar-light px-4 px-lg-5 py-3 py-lg-0">
+    <nav style={{backgroundColor:'#00B98E'}} className="navbar navbar-expand-lg navbar-light px-4 px-lg-5 py-3 py-lg-0">
         <a href="index.php" className="navbar-brand p-0">
         <h1 style={{color:'red'}} className="m-0">BizConsult</h1>
         {/* <img src="assets/images/logo.png" alt="Logo" /> */}
@@ -64,13 +66,14 @@ function Nav_person() {
           <div className="nav-item dropdown">
             <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">Job</a>
             <div className="dropdown-menu m-0">
-            <Link to="/List-company" className="dropdown-item">Company</Link>
+              <Link to="/List-company" className="dropdown-item">Company</Link>
               
-            <Link to="/Offers" className="dropdown-item">Offers</Link>
+              <Link to="/Offers" className="dropdown-item">Offers</Link>
               
-              </div>
+            </div>
           </div>
           <Link to="/Settings-Person" className="nav-item nav-link">Settings</Link>
+          <Link to="/Notif"  className="nav-item nav-link"><FontAwesomeIcon icon={faBell}   /></Link>
         </div>
         <div>
           <a className="btn btn-light rounded-pill text-primary py-2 px-4 ms-lg-5" onClick={handleLogout}>Logout</a>

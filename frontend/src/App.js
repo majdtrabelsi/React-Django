@@ -26,6 +26,12 @@ import PaymentSuccess from './components/payment_success.js';
 import AboutUs from './components/about.js';
 import Settings_Company from './components/user/company/setting_profile.js';
 import Setting_Person from './components/user/person/settings.js';
+import Offers_all  from './components/user/company/Offers_all.js';
+import Rq_offer  from './components/user/company/Rq_offer.js';
+import Notif  from './components/user/person/notif.js';
+
+
+
 
 
 
@@ -71,6 +77,15 @@ function App() {
         <Route path="/about" element={<AboutUs/>} />
         <Route path='/Settings_Company' element={<Settings_Company />} />
         <Route path='/Settings-Person' element={<Setting_Person />} />
+        <Route path="/Profile-company" element={<Profile_company/>} />
+        <Route path="/Offers-all" element={<Offers_all/>} />
+        <Route path="/Rq-offer/:id" element={<Rq_offer/>} />
+        <Route path="/Notif" element={<Notif/>} />
+
+
+
+
+
 
       </Routes>
     </Router>

@@ -10,6 +10,7 @@ from .views import PortfolioViewSet
 from .views import ExperienceViewSet
 from .views import EducationViewSet
 from .views import SkillViewSet
+from .views import RqofferViewSet
 
 
 
@@ -22,10 +23,11 @@ router.register(r'portfolios', PortfolioViewSet, basename='portfolio')
 router.register(r'experiences', ExperienceViewSet, basename='experience')
 router.register(r'educations', EducationViewSet, basename='education')
 router.register(r'skills', SkillViewSet, basename='skill')
+router.register(r'rqoffers', RqofferViewSet, basename='rqoffer')
 
 
 
-from .views import offer_list_create
+
 
 
 from django.urls import path
@@ -44,7 +46,7 @@ urlpatterns = [
     path('csrf/', CSRFTokenView.as_view(), name='csrf'),
     path('social/', social_media_links, name='social'),
     path('api/', include(router.urls)),
-    path('offers/', offer_list_create, name='offer_list_create'),
+
     path('api/company/', UserCompanyView.as_view(), name='user-list'),
     path('api/personpro/', UserPersonProView.as_view(), name='user-list'),
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),

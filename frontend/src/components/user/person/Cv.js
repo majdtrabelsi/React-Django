@@ -1,16 +1,28 @@
-import React, { useState, useEffect } from 'react';
 import 'font-awesome/css/font-awesome.min.css';
 import {Link} from 'react-router-dom';
 import Nav_person from './nav';
 import Footer from './Footer';
-import heroImage from '../../../assets/images/team-2.jpg';
+import heroImage from '../../../assets/images/hero.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {faPhone , faGear } from '@fortawesome/free-solid-svg-icons'
 import { faLinkedin } from '@fortawesome/free-brands-svg-icons';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
+import React, { useState , useEffect} from 'react';
 
 
 function Cv (){
+    const [experiences, setExperiences] = useState([]);
+    const [userName, setUserName] = useState('');
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [name, setName] = useState("");
+    const [imageFile, setImageFile] = useState(null);
+    const [educations, setEducations] = useState([]);
+    const [skills, setSkills] = useState([]);
+
+    const navigate = useNavigate();
+
+
     const [userProfile, setUserProfile] = useState(null);
     
       useEffect(() => {
@@ -37,23 +49,39 @@ function Cv (){
 
 
 
-    const [experiences, setExperiences] = useState([]);
-
+      const fetchData = (type, setState, setData) => {
+        fetch('http://localhost:8000/api/accounts/accountstatus/', { credentials: 'include' })
+          .then(response => response.json())
+          .then(data => {
+            if (data.isAuthenticated) {
+              setIsAuthenticated(true);
+              setUserName(data.user);
+      
+              // Fetch experiences or educations based on type
+              axios.get(`http://127.0.0.1:8000/api/accounts/api/${type}/?user_name=${data.user}`)
+                .then(response => setState(response.data))
+                .catch(error => console.error('Error fetching data:', error));
+            } else {
+              setIsAuthenticated(false);
+              window.location.href = "./login";
+            }
+          })
+          .catch(error => {
+            console.error('Error fetching user status:', error);
+          });
+      };
+      
       useEffect(() => {
-        axios.get('http://127.0.0.1:8000/api/accounts/api/experiences/')
-          .then(response => setExperiences(response.data))
-          .catch(error => console.error('Error fetching offers:', error));
-      }, []);
-
-
-    const [educations, setEducations] = useState([]);
-
-    useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/accounts/api/educations/')
-        .then(response => setEducations(response.data))
-        .catch(error => console.error('Error fetching offers:', error));
-    }, []);
-
+        fetchData('experiences', setExperiences);
+      }, []); // for experiences
+      
+      useEffect(() => {
+        fetchData('educations', setEducations);
+      }, []); // for educations
+      
+      useEffect(() => {
+        fetchData('skills', setSkills);
+      }, []); // for educations
       
   return (
     
@@ -119,171 +147,120 @@ function Cv (){
                 </div>
             </div>
         </div>
-        <section className="resume-section" id='Experience' >
-            <div className="resume-section-content" style={{marginLeft:'1em'}}>
-                <div>
-                    <h2 style={{ display: "inline", color:'black' }} className="mb-5">Experience :</h2>
-                    
-                </div>
-                {experiences.map((experience) => (
-
-                <div style={{ marginTop: "50px" }} className="d-flex flex-column flex-md-row justify-content-between mb-5">
-                    <div div className="flex-grow-1">
+        <section className="resume-section" id="Experience">
+                    <div className="resume-section-content" style={{ marginLeft: '1em' }}>
                         <div>
-                            <h3 style={{ display: 'inline',color:'#706767'  }} className="mb-0">{experience.title}</h3>
+                            <h2 style={{ display: 'inline', color: 'black' }} className="mb-5">Experience</h2>
                         </div>
-                        <div className="subheading mb-3">
-
+        
                         
-                            <p>{experience.description}</p>
-                        </div>
-                        
+                        {experiences.map((experience) => (
+                            <div style={{ marginTop: '50px' }} className="d-flex flex-column flex-md-row justify-content-between mb-5" key={experience.id}>
+                                <div className="flex-grow-1">
+                                    <div>
+                                        <h3 style={{ display: 'inline' }} className="mb-0">{experience.title}</h3>
+                                        
+                                    </div>
+                                    <div className="subheading mb-3">
+                                        <p>{experience.description}</p>
+                                    </div>
+                                </div>
+        
+                                <div className="flex-shrink-0">
+                                <span style={{ marginLeft: "0px" }} className="text-primary"> {experience.start_date_ex} - {experience.end_date_ex}</span>
+                                <a style={{ marginLeft: "30px", color: "#FFBF00" }} href="update_experience.php">
+                                    <i className="fas fa-user-edit fa-"></i>
+                                </a>
+                                <a style={{ marginLeft: "5px", color: "red" }} href="../../backend/experience_delete.php">
+                                    <i className="fas fa-trash-alt fa-"></i>
+                                </a>
+                            </div>
+        
+                            </div>
+                        ))}
                     </div>
-                    <div className="flex-shrink-0">
-                        <span style={{ marginLeft: "0px" }} className="text-primary">  {experience.start_date_ex} - {experience.end_date_ex}</span>
-                        <a style={{ marginLeft: "30px", color: "#FFBF00" }} href="update_experience.php">
-                            <i className="fas fa-user-edit fa-"></i>
-                        </a>
-                        <a style={{ marginLeft: "5px", color: "red" }} href="../../backend/experience_delete.php">
-                            <i className="fas fa-trash-alt fa-"></i>
-                        </a>
-                    </div>
-                </div>))}
-                
-            </div>
-        </section>
+                </section>
         <section className="resume-section" id='Education' >
-            <div className="resume-section-content" style={{marginLeft:'1em'}}>
-                <div>
-                    <h2 style={{ display: "inline" ,color:'black' }} className="mb-5">Education :</h2>
+                    <div className="resume-section-content" style={{marginLeft:'1em'}}>
+                        <div>
+                            <h2 style={{ display: "inline" , color:'black' }} className="mb-5">Education </h2>
+                            
+                            
+                        </div>
+                        
+                        {educations.map((education) => (
+        
+                        <div style={{ marginTop: "50px" }} className="d-flex flex-column flex-md-row justify-content-between mb-5">
+                            
+                            <div key={education.id}  className="flex-grow-1">
+                                <div>
+                                    
+                                    <h3 style={{ display: "inline" }} className="mb-0">{education.school_name} </h3>
+        
+                                </div>
+                                
+                                <div className="subheading mb-3">
+                                    <p>{education.degree}</p>
+                                </div>
+                                <div className="subheading mb-3">
+                                    <p>{education.description_ed}</p>
+                                </div>
+                                
+                            </div>
+                            <div className="flex-shrink-0">
+                                <span style={{ marginLeft: "0px" }} className="text-primary"> {education.start_date_ed} - {education.end_date_ed}</span>
+                                <a style={{ marginLeft: "30px", color: "#FFBF00" }} href="update_experience.php">
+                                    <i className="fas fa-user-edit fa-"></i>
+                                </a>
+                                <a style={{ marginLeft: "5px", color: "red" }} href="../../backend/experience_delete.php">
+                                    <i className="fas fa-trash-alt fa-"></i>
+                                </a>
+                            </div>
+                        </div>
+                        ))}                 
+        
+                    </div>
                     
-                </div>
-                {educations.map((education) => (
-
-                <div style={{ marginTop: "50px" }} className="d-flex flex-column flex-md-row justify-content-between mb-5">
-                    <div div className="flex-grow-1">
-                        <div>
-                            <h3 style={{ display: "inline", color:'#706767' }} className="mb-0">{education.school_name}</h3>
-                        </div>
-                        <div>
-                            <h4 style={{ display: "inline", color:'#706767' }} className="mb-0">{education.degree}</h4>
-                        </div>
-                        <div className="subheading mb-3">
-
-                        
-                            <p>{education.description_ed}</p>
-                        </div>
-                        
-                    </div>
-                    <div className="flex-shrink-0">
-                        <span style={{ marginLeft: "0px" }} className="text-primary">  {education.start_date_ed} - {education.end_date_ed}</span>
-                        <a style={{ marginLeft: "30px", color: "#FFBF00" }} href="update_experience.php">
-                            <i className="fas fa-user-edit fa-"></i>
-                        </a>
-                        <a style={{ marginLeft: "5px", color: "red" }} href="../../backend/experience_delete.php">
-                            <i className="fas fa-trash-alt fa-"></i>
-                        </a>
-                    </div>
-                </div>))}
-                
-            </div>
-        </section>
+                </section>
 
         <section className="resume-section" id='Skills' >
-            <div className="resume-section-content" style={{marginLeft:'1em'}}>
-                <div>
-                    <h2 style={{ display: "inline" , color:'black' }} className="mb-5">Skills :</h2>
-                    
-                </div>
-                <div style={{ marginTop: "50px" }} className="d-flex flex-column flex-md-row justify-content-between mb-5">
-                    <div div className="flex-grow-1">
+                    <div className="resume-section-content" style={{marginLeft:'1em'}}>
                         <div>
-                            <h3 style={{ display: "inline" ,color:'#706767' }} className="mb-0">hello</h3>
+                            <h2 style={{ display: "inline" , color:'black' }} className="mb-5">Skill </h2>
+                            
+                            
                         </div>
-                        <div className="subheading mb-3">
-
-                        
-                            <p>hi hello</p>
-                        </div>
-                        
-                    </div>
-                    <div className="flex-shrink-0">
-                        <span style={{ marginLeft: "0px" }} className="text-primary"> - Present</span>
-                        <a style={{ marginLeft: "30px", color: "#FFBF00" }} href="update_experience.php">
-                            <i className="fas fa-user-edit fa-"></i>
-                        </a>
-                        <a style={{ marginLeft: "5px", color: "red" }} href="../../backend/experience_delete.php">
-                            <i className="fas fa-trash-alt fa-"></i>
-                        </a>
-                    </div>
-                </div>
-                
-            </div>
-        </section>      
+                        {skills.map((skill) => (
         
-        <section className="resume-section" id='Interests' >
-            <div className="resume-section-content" style={{marginLeft:'1em'}}>
-                <div>
-                    <h2 style={{ display: "inline" ,color:'black' }} className="mb-5">Interests :</h2>
+                        <div style={{ marginTop: "50px" }} className="d-flex flex-column flex-md-row justify-content-between mb-5">
+                            
+                            <div key={skill.id}  className="flex-grow-1">
+                                <div>
+                                    <h3 style={{ display: "inline" }} className="mb-0">{skill.skill_name} </h3>
+                                    
+                                </div>
+                                
+                                <div className="subheading mb-3">
+                                    <p>{skill.proficiency}</p>
+                                </div>
+                                
+                                
+                            </div>
+                            <div className="flex-shrink-0">
+                                <a style={{ marginLeft: "30px", color: "#FFBF00" }} href="update_experience.php">
+                                    <i className="fas fa-user-edit fa-"></i>
+                                </a>
+                                <a style={{ marginLeft: "5px", color: "red" }} href="../../backend/experience_delete.php">
+                                    <i className="fas fa-trash-alt fa-"></i>
+                                </a>
+                            </div>
+                        </div>
+                        ))}                 
+        
+                    </div>
                     
-                </div>
-                <div style={{ marginTop: "50px" }} className="d-flex flex-column flex-md-row justify-content-between mb-5">
-                    <div div className="flex-grow-1">
-                        <div>
-                            <h3 style={{ display: "inline",color:'#706767' }} className="mb-0">hello</h3>
-                        </div>
-                        <div className="subheading mb-3">
-
-                        
-                            <p>hi hello</p>
-                        </div>
-                        
-                    </div>
-                    <div className="flex-shrink-0">
-                        <span style={{ marginLeft: "0px" }} className="text-primary"> - Present</span>
-                        <a style={{ marginLeft: "30px", color: "#FFBF00" }} href="update_experience.php">
-                            <i className="fas fa-user-edit fa-"></i>
-                        </a>
-                        <a style={{ marginLeft: "5px", color: "red" }} href="../../backend/experience_delete.php">
-                            <i className="fas fa-trash-alt fa-"></i>
-                        </a>
-                    </div>
-                </div>
-                
-            </div>
-        </section>      
-
-        <section className="resume-section" id='Awards' >
-            <div className="resume-section-content" style={{marginLeft:'1em'}}>
-                <div>
-                    <h2 style={{ display: "inline" ,color:'black' }} className="mb-5">Awards :</h2>
-                    
-                </div>
-                <div style={{ marginTop: "50px" }} className="d-flex flex-column flex-md-row justify-content-between mb-5">
-                    <div div className="flex-grow-1">
-                        <div>
-                            <h3 style={{ display: "inline" ,color:'#706767' }} className="mb-0">hello</h3>
-                        </div>
-                        <div className="subheading mb-3">
-
-                        
-                            <p>hi hello</p>
-                        </div>
-                        
-                    </div>
-                    <div className="flex-shrink-0">
-                        <span style={{ marginLeft: "0px" }} className="text-primary"> - Present</span>
-                        <a style={{ marginLeft: "30px", color: "#FFBF00" }} href="update_experience.php">
-                            <i className="fas fa-user-edit fa-"></i>
-                        </a>
-                        <a style={{ marginLeft: "5px", color: "red" }} href="../../backend/experience_delete.php">
-                            <i className="fas fa-trash-alt fa-"></i>
-                        </a>
-                    </div>
-                </div>
-                
-            </div>
-        </section>      
+                </section>
+                   
 
 
         <Footer/>

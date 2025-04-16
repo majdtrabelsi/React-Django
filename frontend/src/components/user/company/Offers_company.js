@@ -3,6 +3,8 @@ import Nav_company from './Nav';
 import { faWrench, faTrash, faPlus } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 function Offer() {
   const [showForm, setShowForm] = useState(false);
@@ -102,6 +104,9 @@ function Offer() {
       console.error('Error updating offer:', error);
     }
   };
+  const navigate = useNavigate();
+  const goToOfferPage = (id) => {
+    navigate(`/Rq-offer/${id}`);};
 
   return (
     <div className="container-xxl bg-white p-0">
@@ -113,6 +118,10 @@ function Offer() {
           </div>
         </div>
       </div>
+      <button> <Link to="/Rq-offer" className="dropdown-item">Rq Offer</Link></button>
+
+       <button> <Link to="/Offers-all" className="dropdown-item">All Offers</Link></button>
+      
 
       <div className="container-xxl py-6">
         <button style={{ marginBottom: '2em', marginLeft: '40em' }} onClick={handleClick}>
@@ -161,7 +170,14 @@ function Offer() {
                   <a onClick={() => handleEdit(offer)} className="service-btn bg-dark">
                     <FontAwesomeIcon icon={faWrench} size="2x" />
                   </a>
-                  <h2 style={{ paddingTop: '10px' }}>{offer.title}</h2>
+                  
+                  <h2
+                    style={{ paddingTop: '10px', cursor: 'pointer' }}
+                    onClick={() => goToOfferPage(offer.id)}
+                  >
+                    {offer.title}
+                  </h2>
+                  
                   <a onClick={() => handleDelete(offer.id)} className="service-btn">
                     <FontAwesomeIcon icon={faTrash} size="2x" />
                   </a>

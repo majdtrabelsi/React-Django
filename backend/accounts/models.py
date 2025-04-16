@@ -196,3 +196,19 @@ class BillingHistory(models.Model):
 
     def __str__(self):
         return f"{self.user.username} - {self.description} - {self.amount}"
+
+
+class Rqoffer(models.Model):
+    name_person = models.CharField(max_length=255)
+    name_company = models.CharField(max_length=255)
+    id_offer = models.CharField(max_length=100)
+    rp_offer = models.CharField(max_length=100, blank=True, default="")
+    
+
+    def __str__(self):
+        return self.name_company
+    
+    class Meta:
+        constraints = [
+        models.UniqueConstraint(fields=['name_person', 'id_offer'], name='unique_person_offer')
+        ]

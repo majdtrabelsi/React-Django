@@ -21,248 +21,253 @@ function Setting_cv (){
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [isEditing, setIsEditing] = useState(false); // Track whether we're editing an experience
     const [editingExperienceId, setEditingExperienceId] = useState(null);
-    const [name, setName] = useState("");  
-    const [imageFile, setImageFile] = useState(null); 
+    const [name, setName] = useState("");
+    const [imageFile, setImageFile] = useState(null);
+    const [showForm_ed, setShowForm_ed] = useState(false);
+    const [description_ed, setDescription_ed] = useState('');
+    const [school_name, setSchool] = useState('');
+    const [degree, setDegree] = useState('');
+    const [start_date_ed, setStartDate_ed] = useState('');
+    const [end_date_ed, setEndDate_ed] = useState('');
+    const [educations, setEducations] = useState([]);
+    const [editingEducationId, setEditingEducationId] = useState(null);
+    const [isEditing_ed, setIsEditing_ed] = useState(false); // Track whether we're editing an education
     const navigate = useNavigate();
     
-    const handleSave = async (e) => {
-      e.preventDefault();
-  
-      let formData = new FormData();
-      formData.append("name", name);  
-      formData.append("photo", imageFile); 
-  
-      console.log([...formData]);
-  
-      
-      try {
-        const response = await fetch("http://127.0.0.1:8000/api/accounts/profiledata/", {
-          method: "POST",
-          body: formData,  
-          headers: {
-          },
+    // Abstract authentication and data fetching logic
+    const fetchData = (type, setState, setData) => {
+      fetch('http://localhost:8000/api/accounts/accountstatus/', { credentials: 'include' })
+        .then(response => response.json())
+        .then(data => {
+          if (data.isAuthenticated) {
+            setIsAuthenticated(true);
+            setUserName(data.user);
+    
+            // Fetch experiences or educations based on type
+            axios.get(`http://127.0.0.1:8000/api/accounts/api/${type}/?user_name=${data.user}`)
+              .then(response => setState(response.data))
+              .catch(error => console.error('Error fetching data:', error));
+          } else {
+            setIsAuthenticated(false);
+            window.location.href = "./login";
+          }
+        })
+        .catch(error => {
+          console.error('Error fetching user status:', error);
         });
-  
-        if (response.ok) {
-          const responseData = await response.json(); 
-          console.log(responseData);
-          alert("Profile Saved Successfully!");
-          navigate("/Cv-person");
-        } else {
-          const errorData = await response.json();
-          console.log(errorData);
-          alert("Something went wrong!");
-        }
-      } catch (error) {
-        console.log(error);
-        alert("An error occurred while submitting the form.");
+    };
+    
+    useEffect(() => {
+      fetchData('experiences', setExperiences);
+    }, []); // for experiences
+    
+    useEffect(() => {
+      fetchData('educations', setEducations);
+    }, []); // for educations
+    
+    const handleSubmit = (e) => {
+      e.preventDefault();  // Prevent default form submission
+    
+      const experienceData = { user_name: userName, title, description, start_date_ex, end_date_ex };
+    
+      if (isEditing) {
+        // Update experience
+        axios.put(`http://127.0.0.1:8000/api/accounts/api/experiences/${editingExperienceId}/`, experienceData)
+          .then(response => {
+            setExperiences(experiences.map(exp => exp.id === editingExperienceId ? response.data : exp));
+            resetForm();
+            setIsEditing(false); // Reset editing state
+          })
+          .catch(error => console.error('Error updating experience:', error));
+      } else {
+        // Add new experience
+        axios.post('http://127.0.0.1:8000/api/accounts/api/experiences/', experienceData)
+          .then(response => {
+            setExperiences([...experiences, response.data]);
+            resetForm();
+          })
+          .catch(error => console.error('Error creating experience:', error));
       }
     };
-
-    useEffect(() => {
-            axios.get('http://127.0.0.1:8000/api/accounts/api/experiences/')
-              .then(response => setExperiences(response.data))
-              .catch(error => console.error('Error fetching offers:', error));
-          }, []);
-
-
-
-
-    useEffect(() => {
-        // Fetch user status when the component mounts
-        fetch('http://localhost:8000/api/accounts/accountstatus/', { credentials: 'include' })  // Assuming you use session authentication
-          .then(response => response.json())
-          .then(data => {
-            if (data.isAuthenticated) {
-              setIsAuthenticated(true);
-              setUserName(data.user);  // Assuming 'data.user' is the email or the desired user info
-            } else {
-              setIsAuthenticated(false);
-            }
+    
+    const handleSubmit_ed = (e) => {
+      e.preventDefault();  // Prevent default form submission
+    
+      const educationData = { user_name: userName, school_name, degree, description_ed, start_date_ed, end_date_ed };
+    
+      if (isEditing_ed) {
+        // Update education
+        axios.put(`http://127.0.0.1:8000/api/accounts/api/educations/${editingEducationId}/`, educationData)
+          .then(response => {
+            setEducations(educations.map(ed => ed.id === editingEducationId ? response.data : ed));
+            resetForm_ed();
+            setIsEditing_ed(false); // Reset editing state
           })
-          .catch(error => {
-            console.error('Error fetching user status:', error);
-          });
-      }, [])
-
-
-
-
-
-
-    const handleSubmit = (e) => {
-        e.preventDefault();  // Prevent default form submission
-    
-        const experienceData = {user_name: userName, title, description,start_date_ex , end_date_ex  };
-    
-        if (isEditing) {
-            // Update experience
-            axios.put(`http://127.0.0.1:8000/api/accounts/api/experiences/${editingExperienceId}/`, experienceData)
-                .then(response => {
-                    setExperiences(experiences.map(exp => exp.id === editingExperienceId ? response.data : exp));
-                    resetForm();
-                    setIsEditing(false); // Reset editing state
-                })
-                .catch(error => console.error('Error updating experience:', error));
-        } else {
-            // Add new experience
-            axios.post('http://127.0.0.1:8000/api/accounts/api/experiences/', experienceData)
-                .then(response => {
-                    setExperiences([...experiences, response.data]);
-                    resetForm();
-                })
-                .catch(error => console.error('Error creating experience:', error));
-        }
+          .catch(error => console.error('Error updating education:', error));
+      } else {
+        // Add new education
+        axios.post('http://127.0.0.1:8000/api/accounts/api/educations/', educationData)
+          .then(response => {
+            setEducations([...educations, response.data]);
+            resetForm_ed();
+          })
+          .catch(error => console.error('Error creating education:', error));
+      }
     };
+    
     const handleEdit = (experience) => {
-        // Set form for editing
-        setIsEditing(true);
-        setEditingExperienceId(experience.id);
-        setTitle(experience.title);
-        setDescription(experience.description);
-        setStartDate_ex(experience.start_date_ex);
-        setEndDate_ex(experience.end_date_ex);
-        setShowForm(true); // Ensure the form is shown when editing
+      setIsEditing(true);
+      setEditingExperienceId(experience.id);
+      setTitle(experience.title);
+      setDescription(experience.description);
+      setStartDate_ex(experience.start_date_ex);
+      setEndDate_ex(experience.end_date_ex);
+      setShowForm(true);
     };
-      const handleDelete = (experienceId) => {
-        axios.delete(`http://127.0.0.1:8000/api/accounts/api/experiences/${experienceId}/`)
-          .then(() => {
-            // Remove the deleted offer from the list without re-fetching all offers
-            setExperiences(experiences.filter(experience => experience.id !== experienceId));
-          })
-          .catch(error => console.error('Error deleting offer:', error));
-      };
-
-
-
-      const resetForm = () => {
-        setTitle('');
-        setDescription('');
-        setStartDate_ex('');
-        setEndDate_ex('');
+    
+    const handleEdit_ed = (education) => {
+      setIsEditing_ed(true);
+      setEditingEducationId(education.id);
+      setSchool(education.school_name);
+      setDegree(education.degree);
+      setDescription_ed(education.description_ed);
+      setStartDate_ed(education.start_date_ed);
+      setEndDate_ed(education.end_date_ed);
+      setShowForm_ed(true);
     };
-
+    
+    const handleDelete = (experienceId) => {
+      axios.delete(`http://127.0.0.1:8000/api/accounts/api/experiences/${experienceId}/`)
+        .then(() => {
+          setExperiences(experiences.filter(experience => experience.id !== experienceId));
+        })
+        .catch(error => console.error('Error deleting experience:', error));
+    };
+    
+    const handleDelete_ed = (educationId) => {
+      axios.delete(`http://127.0.0.1:8000/api/accounts/api/educations/${educationId}/`)
+        .then(() => {
+          setEducations(educations.filter(education => education.id !== educationId));
+        })
+        .catch(error => console.error('Error deleting education:', error));
+    };
+    
+    const resetForm = () => {
+      setTitle('');
+      setDescription('');
+      setStartDate_ex('');
+      setEndDate_ex('');
+    };
+    
+    const resetForm_ed = () => {
+      setSchool('');
+      setDegree('');
+      setDescription_ed('');
+      setStartDate_ed('');
+      setEndDate_ed('');
+    };
+    
     const handleClick = () => {
-        setShowForm(!showForm);
-        setIsEditing(false); // Reset editing state when opening the form for new entry
+      setShowForm(!showForm);
+      setIsEditing(false); // Reset editing state when opening the form for new entry
     };
+    
+    const handleClick_ed = () => {
+      setShowForm_ed(!showForm_ed);
+      setIsEditing_ed(false); // Reset editing state when opening the form for new entry
+    };
+    
 
 
-      const [showForm_ed, setShowForm_ed] = useState(false);
-      const [description_ed, setDescription_ed] = useState('');
-      const [school_name, setSchool] = useState('');
-      const [degree, setDegree] = useState('');
-      const [start_date_ed, setStartDate_ed] = useState('');
-      const [end_date_ed, setEndDate_ed] = useState('');
-
-      
-      const [educations, setEducations] = useState([]);
-     
   
-      useEffect(() => {
-              axios.get('http://127.0.0.1:8000/api/accounts/api/educations/')
-                .then(response => setEducations(response.data))
-                .catch(error => console.error('Error fetching offers:', error));
-            }, []);
-  
-  
-      const handleSubmit_ed = (e) => {
-          e.preventDefault();  // Prevent default form submission
-      
-          const educationData = {user_name: userName, school_name,degree, description_ed,start_date_ed , end_date_ed };
-      
-          axios.post('http://127.0.0.1:8000/api/accounts/api/educations/', educationData)
-            .then(response => {
-              // Update portfolios with the new one added
-              setEducations(prevEducations => [...prevEducations, response.data]);
-      
-              // Clear the form fields
-              setDescription_ed('');
-              school_name('');
-              degree('');
-              start_date_ed('')
-              end_date_ed('')
-              // Re-fetch the portfolio list after adding a new one
-              // Optionally, you could directly update the state here without a second API call
-              // setPortfolios([...portfolios, response.data]);
-            })
-            .catch(error => console.error('Error creating portfolio:', error));
-        };
-        const handleDelete_ed = (educationId) => {
-          axios.delete(`http://127.0.0.1:8000/api/accounts/api/educations/${educationId}/`)
-            .then(() => {
-              // Remove the deleted offer from the list without re-fetching all offers
-              setEducations(educations.filter(education => education.id !== educationId));
-            })
-            .catch(error => console.error('Error deleting offer:', error));
-        };
-  
-  
-  
-      const handleClick_ed = () => {
-          setShowForm_ed(!showForm_ed);
-        };
-  
-  
-
-
 
 
     const [showForm_skill, setShowForm_skill] = useState(false);
     const [skill_name, setSkill] = useState('');
     const [proficiency, setProficiency] = useState('');
-    
-    
     const [skills, setSkills] = useState([]);
+    const [isEditing_skill, setIsEditing_skill] = useState(false); // Track whether we're editing a skill
+    const [editingSkillId, setEditingSkillId] = useState(null);
     
-
+    // Fetch skills for the user
     useEffect(() => {
-            axios.get('http://127.0.0.1:8000/api/accounts/api/skills/')
-            .then(response => setSkills(response.data))
-            .catch(error => console.error('Error fetching offers:', error));
-        }, []);
-
-
-
+        fetch('http://localhost:8000/api/accounts/accountstatus/', { credentials: 'include' })
+            .then(response => response.json())
+            .then(data => {
+                if (data.isAuthenticated) {
+                    setIsAuthenticated(true);
+                    setUserName(data.user);
+    
+                    // Fetch skills only for this user
+                    axios.get(`http://127.0.0.1:8000/api/accounts/api/skills/?user_name=${data.user}`)
+                        .then(response => setSkills(response.data))
+                        .catch(error => console.error('Error fetching skills:', error));
+                } else {
+                    setIsAuthenticated(false);
+                    window.location.href = "./login";
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching user status:', error);
+            });
+    }, []);
+    
+    // Handle adding or editing a skill
     const handleSubmit_skill = (e) => {
         e.preventDefault();  // Prevent default form submission
     
-        const skillData = {user_name: userName, skill_name,proficiency };
+        const skillData = { user_name: userName, skill_name, proficiency };
     
-        axios.post('http://127.0.0.1:8000/api/accounts/api/skills/', skillData)
-        .then(response => {
-            // Update portfolios with the new one added
-            setSkills(prevSkills => [...prevSkills, response.data]);
-    
-            // Clear the form fields
-            skill_name('');
-            proficiency('');
-            // Re-fetch the portfolio list after adding a new one
-            // Optionally, you could directly update the state here without a second API call
-            // setPortfolios([...portfolios, response.data]);
-        })
-        .catch(error => console.error('Error creating portfolio:', error));
+        if (isEditing_skill) {
+            // Update skill
+            axios.put(`http://127.0.0.1:8000/api/accounts/api/skills/${editingSkillId}/`, skillData)
+                .then(response => {
+                    setSkills(skills.map(skill => skill.id === editingSkillId ? response.data : skill));
+                    resetForm_skill();
+                    setIsEditing_skill(false); // Reset editing state
+                })
+                .catch(error => console.error('Error updating skill:', error));
+        } else {
+            // Add new skill
+            axios.post('http://127.0.0.1:8000/api/accounts/api/skills/', skillData)
+                .then(response => {
+                    setSkills([...skills, response.data]);
+                    resetForm_skill();
+                })
+                .catch(error => console.error('Error creating skill:', error));
+        }
     };
+    
+    // Handle editing a skill
+    const handleEdit_skill = (skill) => {
+        setIsEditing_skill(true);
+        setEditingSkillId(skill.id);
+        setSkill(skill.skill_name);
+        setProficiency(skill.proficiency);
+        setShowForm_skill(true); // Show form when editing
+    };
+    
+    // Handle deleting a skill
     const handleDelete_skill = (skillId) => {
         axios.delete(`http://127.0.0.1:8000/api/accounts/api/skills/${skillId}/`)
-        .then(() => {
-            // Remove the deleted offer from the list without re-fetching all offers
-            setSkills(skills.filter(skill => skill.id !== skillId));
-        })
-        .catch(error => console.error('Error deleting offer:', error));
+            .then(() => {
+                setSkills(skills.filter(skill => skill.id !== skillId)); // Remove deleted skill from list
+            })
+            .catch(error => console.error('Error deleting skill:', error));
     };
-
-
-
+    
+    // Reset skill form
+    const resetForm_skill = () => {
+        setSkill('');
+        setProficiency('');
+    };
+    
+    // Toggle visibility of the skill form
     const handleClick_skill = () => {
         setShowForm_skill(!showForm_skill);
+        setIsEditing_skill(false); // Reset editing state when opening the form for new entry
     };
-
-  
-
-
-
-
+    
     
 
   return (
@@ -532,7 +537,15 @@ function Setting_cv (){
                     
                     <div key={education.id}  className="flex-grow-1">
                         <div>
+                            
                             <h3 style={{ display: "inline" }} className="mb-0">{education.school_name} </h3>
+                            <a
+                                style={{ marginLeft: '30px', color: '#FFBF00' }}
+                                onClick={() => handleEdit_ed(education)}
+                                href="#"
+                                >
+                                    <FontAwesomeIcon icon={faEdit} size="1x" />
+                            </a>
                             <a style={{marginLeft:'1em',color:'red'}} onClick={() => handleDelete_ed(education.id)} className="service-btn" href="">
                                 <FontAwesomeIcon icon={faTrash}size='1x' />
                             </a>
@@ -605,6 +618,13 @@ function Setting_cv (){
                     <div key={skill.id}  className="flex-grow-1">
                         <div>
                             <h3 style={{ display: "inline" }} className="mb-0">{skill.skill_name} </h3>
+                            <a
+                                style={{ marginLeft: '30px', color: '#FFBF00' }}
+                                onClick={() => handleEdit_skill(skill)}
+                                href="#"
+                                >
+                                    <FontAwesomeIcon icon={faEdit} size="1x" />
+                            </a>
                             <a style={{marginLeft:'1em',color:'red'}} onClick={() => handleDelete_skill(skill.id)} className="service-btn" href="">
                                 <FontAwesomeIcon icon={faTrash}size='1x' />
                             </a>

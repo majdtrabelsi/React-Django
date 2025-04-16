@@ -330,8 +330,8 @@ from .serializers import OfferSerializer
 from django_filters.rest_framework import DjangoFilterBackend
 
 class OfferViewSet(viewsets.ModelViewSet):
-    queryset = Offer.objects.all()
     serializer_class = OfferSerializer
+    queryset = Offer.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['user_name']  # Allow filtering by 'user_name'
 
@@ -341,26 +341,8 @@ class OfferViewSet(viewsets.ModelViewSet):
 
 
 
-# views.py
-from django.shortcuts import render, redirect
-from .models import Offer
-from .forms import OfferForm
 
-def offer_list_create(request):
-    # Check if the form was submitted
-    if request.method == "POST":
-        form = OfferForm(request.POST)
-        if form.is_valid():
-            form.save()
-            return redirect('offer_list_create')  # Redirect to avoid re-submission on refresh
-    else:
-        form = OfferForm()
 
-    # Fetch all offers from the database
-    offers = Offer.objects.filter(user_name=request.user)
-
-    # Render the template with the form and the list of offers
-    return render(request, 'offer_list_create.html', {'form': form, 'offers': offers})
 
 
 
@@ -371,6 +353,11 @@ from .serializers import PortfolioSerializer
 class PortfolioViewSet(viewsets.ModelViewSet):
     serializer_class = PortfolioSerializer
     queryset = Portfolio.objects.all()
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ['user_name']  # Allow filtering by 'user_name'
+
+
+
 
     
 
@@ -380,7 +367,9 @@ from .serializers import ExperienceSerializer
 class ExperienceViewSet(viewsets.ModelViewSet):
     serializer_class = ExperienceSerializer
     queryset = Experience.objects.all()
-    
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ['user_name']  # Allow filtering by 'user_name'
+ 
 
 
 from .models import Education
@@ -389,7 +378,9 @@ from .serializers import EducationSerializer
 class EducationViewSet(viewsets.ModelViewSet):
     serializer_class = EducationSerializer
     queryset = Education.objects.all()
-    
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ['user_name']  # Allow filtering by 'user_name'
+
 
 
 
@@ -400,6 +391,8 @@ from .serializers import SkillSerializer
 class SkillViewSet(viewsets.ModelViewSet):
     queryset = Skill.objects.all()
     serializer_class = SkillSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ['user_name']  # Allow filtering by 'user_name'
 
     
 
@@ -709,3 +702,22 @@ def force_downgrade(request):
     user.subscription_id = None
     user.save()
     return Response({'message': 'Account downgraded to Free.'})
+
+
+from rest_framework import viewsets
+from .models import Rqoffer
+from .serializers import RqofferSerializer
+
+class RqofferViewSet(viewsets.ModelViewSet):
+    queryset = Rqoffer.objects.all()
+    serializer_class = RqofferSerializer
+    filter_backends = (DjangoFilterBackend,)
+    filterset_fields = ['id_offer']  # Allow filtering by 'user_name'
+
+
+
+
+
+
+
+

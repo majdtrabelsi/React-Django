@@ -7,7 +7,7 @@ import Footer from './Footer';
 import Team from '../../../assets/images/team-2.jpg';
 import heroImage from '../../../assets/images/team-2.jpg';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faUsers, faFile, faGear } from '@fortawesome/free-solid-svg-icons';
+import { faUsers, faFile, faGear ,faRightToBracket } from '@fortawesome/free-solid-svg-icons';
 
 function Profile() {
     const [userProfile, setUserProfile] = useState(null);
@@ -111,7 +111,35 @@ function Profile() {
                         </div>
                     </div>
                 </div>
-                <h2>hihellohihello</h2>
+                <div className="container-xxl py-6">
+                    <div style={{marginLeft:'20em'}} className="container">
+      
+                        <div  className="row g-4">
+                            <div  className="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
+                                <div className="service-item rounded h-100">
+                                <div className="d-flex justify-content-between">
+                                    <div className="service-icon">
+                                    <img className="img-fluid rounded-circle w-100" />
+                                    </div>
+                                    <h2 style={{ paddingTop: '10px' }}>post1</h2>
+                                    <a
+                                    className="service-btn"
+                                    href="#"
+                                        // Call the function on button click
+                                    >
+                                        <FontAwesomeIcon icon={faRightToBracket} size='2x' />
+                                    </a>
+                                </div>
+                                <div className="p-5">
+                                    <h5 className="mb-3">Post1</h5>
+                                    <span></span>
+                                </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
             </div>
         </div>
     );

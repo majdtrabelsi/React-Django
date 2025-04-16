@@ -68,3 +68,20 @@ class SkillAdmin(admin.ModelAdmin):
 
 # Register the custom admin configuration
 admin.site.register(Skill, SkillAdmin)
+
+
+
+
+
+from .models import Rqoffer
+
+class RqofferAdmin(admin.ModelAdmin):
+    list_display = ('id', 'name_person', 'name_company','id_offer','rp_offer')  # Display the title, description, and date fields in the list view
+
+# Register the custom admin configuration
+admin.site.register(Rqoffer, RqofferAdmin)
+
+
+
+
+

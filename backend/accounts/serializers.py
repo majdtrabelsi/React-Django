@@ -232,3 +232,12 @@ class BillingHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = BillingHistory
         fields = ['amount', 'description', 'status', 'created_at', 'stripe_invoice_id', 'stripe_invoice_url']
+
+
+
+from .models import Rqoffer
+
+class RqofferSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Rqoffer
+        fields = ['id', 'name_person', 'name_company', 'id_offer','rp_offer']
