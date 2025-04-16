@@ -70,6 +70,7 @@ function Nav_person() {
               
               </div>
           </div>
+          <Link to="/Settings-Person" className="nav-item nav-link">Settings</Link>
         </div>
         <div>
           <a className="btn btn-light rounded-pill text-primary py-2 px-4 ms-lg-5" onClick={handleLogout}>Logout</a>

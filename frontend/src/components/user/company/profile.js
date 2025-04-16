@@ -10,21 +10,34 @@ import { faUsers , faFile , faGear } from '@fortawesome/free-solid-svg-icons'
 
 function Profile() {
     const [userProfile, setUserProfile] = useState(null);
+    const [csrfToken, setCsrfToken] = useState('');
+    useEffect(() => {
+        fetch("http://localhost:8000/api/accounts/csrf/", { credentials: 'include' })
+          .then((res) => res.json())
+          .then((data) => setCsrfToken(data.csrfToken))
+          .catch((error) => console.error("Error fetching CSRF token:", error));
+      }, []);
 
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        const response = await fetch('http://127.0.0.1:8000/api/accounts/profiledata/');
-        const data = await response.json();
-        console.log('Fetched Profile Data:', data);  // Log the data to check the response
-        setUserProfile(data[0]); // Set the first item in the array to the state
-      } catch (error) {
-        console.error('Error fetching profile data:', error);
-      }
-    };
-
-    fetchUserProfile();
-  }, []);
+      useEffect(() => {
+        if (!csrfToken) return;
+        const fetchUserProfile = async () => {
+          try {
+            const response = await fetch('http://localhost:8000/api/accounts/profiledata/', {
+              method: "GET",
+              credentials: "include",
+              headers: {
+                "X-CSRFToken": csrfToken,
+              },
+            });
+            const data = await response.json();
+            console.log('Fetched Profile Data:', data);
+            setUserProfile(data);
+          } catch (error) {
+            console.error('Error fetching profile data:', error);
+          }
+        };
+        fetchUserProfile();
+      }, [csrfToken]);      
 
   const photoUrl = userProfile ? userProfile.photo : Team;
   
@@ -36,11 +49,10 @@ function Profile() {
         <div className="container-xxl position-relative p-0">
             <Nav/>
             
-            {/* Navbar (Replace with your navbar component) */}
             <div style={{paddingTop:'1em'}}  className="container-xxl bg-primary page-header">
                     
                 <div  className="container text-center">
-                    <Link to="/" style={{marginLeft:'75em' }}><a title='Setting'  className="btn btn-outline btn-social" >
+                    <Link to="/Settings_Company" style={{marginLeft:'75em' }}><a title='Settings'  className="btn btn-outline btn-social" >
                         <FontAwesomeIcon style={{color:'#553f40'}}  icon={faGear} size="2x" /> 
                         </a>
                     </Link>

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth import get_user_model
 from rest_framework.exceptions import ValidationError
 from .models import ContactMessage,Profile,Experience, Education, Skill, Interest, Award, SocialMediaLink,User
-
+from rest_framework.validators import UniqueValidator
 User = get_user_model()
 
 class LoginSerializer(serializers.Serializer):
@@ -42,6 +42,7 @@ class BaseUserRegistrationSerializer(serializers.ModelSerializer):
             first_name=validated_data['firstname'],
             last_name=validated_data['lastname'],
             type=validated_data['type'],  # User type is set here
+            is_paid=False,
         )
         user.set_password(validated_data['password'])  # Hash the password
         user.save()
@@ -66,18 +67,26 @@ class UserRegistrationCompSerializer(BaseUserRegistrationSerializer):
     """
     Serializer for 'Company' user registration.
     """
-    companyname = serializers.CharField()  # Additional field for company name
+    companyname = serializers.CharField(
+    required=True,
+    min_length=4,
+    max_length=100,
+    validators=[
+        UniqueValidator(
+            queryset=User.objects.all(),
+            message="This company name is already taken."
+            )
+        ]
+    )
+    #hedha bech yab9a bin 4 w 100 chars w unique w champ obligatoire
     type = serializers.CharField(default='company')  # Default type to 'company'
 
     class Meta:
         model = User
         fields = ['email', 'username', 'firstname', 'lastname', 'password', 'confirm_password', 'companyname', 'type']
-        extra_kwargs = {'username': {'required': False}}  # Mark username as optional
+        extra_kwargs = {'username': {'required': False}}
 
     def create(self, validated_data):
-        """
-        Set username to email if not explicitly provided and create a company user.
-        """
         validated_data['username'] = validated_data.get('username', validated_data['email'])  # Use email as username if not provided
 
         user = User(
@@ -86,17 +95,11 @@ class UserRegistrationCompSerializer(BaseUserRegistrationSerializer):
             first_name=validated_data['firstname'],
             last_name=validated_data['lastname'],
             type=validated_data['type'],
+            companyname=validated_data['companyname'],
+            is_paid=False,
         )
         user.set_password(validated_data['password'])  # Hash the password
         user.save()
-
-        # Optionally, you can handle the company name separately if needed
-        company_name = validated_data.get('companyname')
-        if company_name:
-            # If you have a company model or other logic for the company, handle it here
-            # For now, we're just saving it in the user profile or adding related model if needed
-            pass
-
         return user
 
 class ContactMessageSerializer(serializers.ModelSerializer):
@@ -184,3 +187,48 @@ class SocialMediaLinkSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         validated_data['user'] = self.context['request'].user
         return super().create(validated_data)
+
+
+class ChangePasswordSerializer(serializers.Serializer):
+    current_password = serializers.CharField(required=True)
+    new_password = serializers.CharField(required=True)
+    confirm_password = serializers.CharField(required=True)
+
+    def validate(self, data):
+        user = self.context['request'].user
+
+        if not user.check_password(data['current_password']):
+            raise serializers.ValidationError({"current_password": "Current password is incorrect."})
+
+        if data['new_password'] != data['confirm_password']:
+            raise serializers.ValidationError({"confirm_password": "New passwords do not match."})
+
+        return data
+
+from .models import BillingInfo, BillingHistory
+
+class BillingInfoSerializer(serializers.ModelSerializer):
+    card_last4 = serializers.SerializerMethodField()
+    expiry = serializers.SerializerMethodField()
+    has_credit_card = serializers.SerializerMethodField()
+
+    class Meta:
+        model = BillingInfo
+        fields = ['card_last4', 'expiry', 'added_at', 'has_credit_card']
+
+    def get_card_last4(self, obj):
+        return obj.card_last4()
+
+    def get_expiry(self, obj):
+        return obj.expiry()
+
+    def get_has_credit_card(self, obj):
+        return obj.has_card()
+
+
+class BillingHistorySerializer(serializers.ModelSerializer):
+    created_at = serializers.DateTimeField(format="%Y-%m-%d %H:%M")
+
+    class Meta:
+        model = BillingHistory
+        fields = ['amount', 'description', 'status', 'created_at', 'stripe_invoice_id', 'stripe_invoice_url']

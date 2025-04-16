@@ -48,6 +48,7 @@ function Nav_company() {
         <div className="navbar-nav ms-auto py-0">
           <Link to="/index-company" className="nav-item nav-link">Home</Link>
           <Link to="/Profile-company" className="nav-item nav-link">Profile</Link>
+          
 
           
           <div className="nav-item dropdown">
@@ -61,6 +62,7 @@ function Nav_company() {
               
               </div>
           </div>
+          <Link to="/Settings-Company" className="nav-item nav-link">Settings</Link>
         </div>
         <div>
           <a className="btn btn-light rounded-pill text-primary py-2 px-4 ms-lg-5" onClick={handleLogout}>Logout</a>

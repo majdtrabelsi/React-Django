@@ -20,7 +20,12 @@ import List_person  from './components/user/company/List_person.js';
 import Offers_company  from './components/user/company/Offers_company.js';
 import List_Companys  from './components/user/company/List_company.js';
 import Profile_company  from './components/user/company/profile.js';
-
+import Setting_Company  from './components/user/company/Setting.js';
+import Payment from './components/payment.js';
+import PaymentSuccess from './components/payment_success.js';
+import AboutUs from './components/about.js';
+import Settings_Company from './components/user/company/setting_profile.js';
+import Setting_Person from './components/user/person/settings.js';
 
 
 
@@ -36,9 +41,8 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 function App() {
   return (
     <Router>
-      
       <Routes>
-
+      
         <Route path="/contact" element={<Contact />} />
         <Route path="/" element={<HeroSection />} />
         <Route path="/signup" element={<Sign_up />} />
@@ -60,10 +64,13 @@ function App() {
         <Route path="/List-person" element={<List_person/>} />
         <Route path="/Offers-company" element={<Offers_company/>} />
         <Route path="/List-companys" element={<List_Companys/>} />
-        <Route path="/Profile-company" element={<Profile_company/>} />
-
-
-
+        <Route path="/Profile-company" element={<Profile_company/>} />$
+        <Route path="/Settings-Company" element={<Setting_Company/>} />
+        <Route path="/Payment" element={<Payment/>} />
+        <Route path="/payment/success/" element={<PaymentSuccess/>} />
+        <Route path="/about" element={<AboutUs/>} />
+        <Route path='/Settings_Company' element={<Settings_Company />} />
+        <Route path='/Settings-Person' element={<Setting_Person />} />
 
       </Routes>
     </Router>

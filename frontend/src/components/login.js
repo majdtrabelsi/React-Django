@@ -41,23 +41,6 @@ function Login() {
       .catch(() => setIsLoading(false));
   }, []);
 
-  useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
-      const userType = localStorage.getItem('userType');
-      if (userType === 'company') {
-        navigate('/index-company');
-      } else if (userType === 'personal') {
-        navigate('/index-person');
-      } else if (userType === 'professional') {
-        navigate('/index-professional');
-      }
-      else setError('User type is invalid!');
-    } else {
-      setIsLoading(false);
-    }
-  }, [navigate]);
-
   const handleSubmit = async (event) => {
     event.preventDefault();
 

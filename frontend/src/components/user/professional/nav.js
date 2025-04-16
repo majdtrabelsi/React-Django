@@ -3,7 +3,7 @@ import './styles/main.css';
 import './styles/bootstrap.min.css';
 
 function Naven() {
-  const [isLoggedIn, setIsLoggedIn] = useState(false);  // Initially assume the user is not logged in
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
     fetch('http://localhost:8000/api/accounts/accountstatus/', {
@@ -52,7 +52,7 @@ function Naven() {
 
   return (
     <nav className="navbar navbar-expand-lg navbar-light px-4 px-lg-5 py-3 py-lg-0">
-      <a href="index.php" className="navbar-brand p-0">
+      <a href="" className="navbar-brand p-0">
         <h1 className="m-0">BizConsult</h1>
         <img src="./img/logo.png" alt="Logo" />
       </a>
@@ -61,8 +61,9 @@ function Naven() {
       </button>
       <div className="collapse navbar-collapse" id="navbarCollapse">
         <div className="navbar-nav ms-auto py-0">
-          <a href="/" className="nav-item nav-link active">Home</a>
+          <a href="/index-professional" className="nav-item nav-link active">Home</a>
           <a href="/cv" className="nav-item nav-link active">CV</a>
+          <a href="/Settings" className="nav-item nav-link active">Settings</a>
 
           {/* Conditionally render the Logout link based on login status */}
           {isLoggedIn ? (
