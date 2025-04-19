@@ -154,3 +154,17 @@ class Rqoffer(models.Model):
         constraints = [
         models.UniqueConstraint(fields=['name_person', 'id_offer'], name='unique_person_offer')
         ]
+
+
+# community/models.py
+
+from django.db import models
+from django.utils import timezone
+
+class CommunityMessage(models.Model):
+    sender = models.CharField(max_length=100)
+    content = models.TextField()
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.sender} at {self.timestamp}"

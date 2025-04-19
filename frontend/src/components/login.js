@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/main.css';
 import '../styles/bootstrap.min.css';
 import Nav from './Navbar.js';
-import { useNavigate } from 'react-router-dom'; // import useNavigate for redirection
+import { useNavigate } from 'react-router-dom';
 
 function Login() {
   const [isLoading, setIsLoading] = useState(true);
@@ -11,90 +11,109 @@ function Login() {
   const [error, setError] = useState('');
   const [csrfToken, setCsrfToken] = useState('');
   const navigate = useNavigate();
+
+  // === Fetch CSRF token ===
   useEffect(() => {
-    fetch('http://localhost:8000/api/accounts/csrf/', {
-      credentials: 'include',
-    })
-      .then((res) => res.json())
-      .then((data) => {
+    const fetchCsrfToken = async () => {
+      try {
+        const res = await fetch('http://localhost:8000/api/accounts/csrf/', {
+          credentials: 'include',
+        });
+        const data = await res.json();
         setCsrfToken(data.csrfToken);
+      } catch (err) {
+        console.error('CSRF fetch error:', err);
+      } finally {
         setIsLoading(false);
-      })
-      .catch((err) => console.error('CSRF fetch error:', err));
-  }, []);
-  const redirectToDashboard = (userType) => {
-    if (userType === 'company') navigate('/index-company');
-    else if (userType === 'personal') navigate('/index-person');
-    else if (userType === 'professional') navigate('/index-professional');
-    else setError('User type is invalid!');
-  };
-  useEffect(() => {
-    fetch('http://localhost:8000/api/accounts/accountstatus/', {
-      credentials: 'include',
-    })
-      .then((res) => res.json())
-      .then((data) => {
-        if (data.isAuthenticated) {
-          redirectToDashboard(data.userType);
-        }
-      })
-      .catch(() => setIsLoading(false));
+      }
+    };
+    fetchCsrfToken();
   }, []);
 
+  // === Redirect helper ===
+  const redirectToDashboard = (userType) => {
+    switch (userType) {
+      case 'company':
+        navigate('/index-company');
+        break;
+      case 'personal':
+        navigate('/index-person');
+        break;
+      case 'professional':
+        navigate('/index-professional');
+        break;
+      default:
+        setError('User type is invalid!');
+    }
+  };
+
+  // === Check session from server ===
+  useEffect(() => {
+    const checkSession = async () => {
+      try {
+        const res = await fetch('http://localhost:8000/api/accounts/accountstatus/', {
+          credentials: 'include',
+        });
+        const data = await res.json();
+        if (data.isAuthenticated) {
+          redirectToDashboard(data.userType);
+        } else {
+          setIsLoading(false);
+        }
+      } catch (err) {
+        setIsLoading(false);
+      }
+    };
+    checkSession();
+  }, []);
+
+  // === Check session from localStorage ===
   useEffect(() => {
     const token = localStorage.getItem('access_token');
-    if (token) {
-      const userType = localStorage.getItem('userType');
-      if (userType === 'company') {
-        navigate('/index-company');
-      } else if (userType === 'personal') {
-        navigate('/index-person');
-      } else if (userType === 'professional') {
-        navigate('/index-professional');
-      }
-      else setError('User type is invalid!');
+    const userType = localStorage.getItem('userType');
+
+    if (token && userType) {
+      redirectToDashboard(userType);
     } else {
       setIsLoading(false);
     }
   }, [navigate]);
 
+  // === Handle form submission ===
   const handleSubmit = async (event) => {
     event.preventDefault();
-
-    const data = {
-      email: email,
-      password: password,
-    };
+    setError(''); // Clear any previous error
 
     try {
-      const response = await fetch('http://localhost:8000/api/accounts/login/', {
+      const res = await fetch('http://localhost:8000/api/accounts/login/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRFToken': csrfToken,
         },
         credentials: 'include',
-        body: JSON.stringify(data),
+        body: JSON.stringify({ email, password }),
       });
 
-      const responseData = await response.json();
+      const result = await res.json();
 
-      if (response.ok) {
-        redirectToDashboard(responseData.type);
-      }else {
-        setError(responseData.message || 'Invalid credentials');
-      }} catch (error) {
-        console.error('Error:', error);
-        setError('Network error. Please try again.');
+      if (res.ok) {
+        redirectToDashboard(result.type);
+      } else {
+        setError(result.message || 'Invalid credentials');
       }
-    };
+    } catch (err) {
+      console.error('Login error:', err);
+      setError('Network error. Please try again.');
+    }
+  };
 
-
+  // === Render ===
   return (
     <div className="container-xxl bg-white p-0">
       <Nav />
-      {/* Show spinner if loading */}
-      {isLoading && (
+      
+      {isLoading ? (
         <div
           id="spinner"
           className="show bg-white position-fixed translate-middle w-100 vh-100 top-50 start-50 d-flex align-items-center justify-content-center"
@@ -103,10 +122,7 @@ function Login() {
             <span className="sr-only">Loading...</span>
           </div>
         </div>
-      )}
-
-      {/* Your actual content */}
-      {!isLoading && (
+      ) : (
         <div className="container-xxl position-relative p-0">
           <div className="container-xxl bg-primary page-header">
             <div className="container text-center">
@@ -127,11 +143,11 @@ function Login() {
               <div className="mx-auto text-center wow fadeInUp" data-wow-delay="0.1s" style={{ maxWidth: '600px' }}>
                 <div className="d-inline-block border rounded-pill text-primary px-4 mb-3">Login</div>
                 <h2 className="mb-5">It's Simple And Quick.</h2>
-                <div id="result"></div>
               </div>
+
               <div className="row justify-content-center">
                 <div className="col-lg-7 wow fadeInUp" data-wow-delay="0.3s">
-                  <form id="login" onSubmit={handleSubmit}>  {/* Use onSubmit here */}
+                  <form id="login" onSubmit={handleSubmit}>
                     <div className="row g-3 justify-content-md-center">
                       <div className="col-md-6">
                         <div className="form-floating">
@@ -165,15 +181,16 @@ function Login() {
                         </div>
                       </div>
                     </div>
+
                     <div className="row g-3 mt-2 justify-content-md-center">
                       <div className="col-6">
-                        <input className="form-check-input" name="remember_me" type="checkbox" value="" id="remember" />
-                        <label htmlFor="remember">Remember me </label>
+                        <input className="form-check-input" type="checkbox" id="remember" />
+                        <label htmlFor="remember">Remember me</label>
                       </div>
                     </div>
 
                     <div className="row g-3 mt-2 justify-content-md-center">
-                      <div className="col-6 ">
+                      <div className="col-6">
                         <button className="btn btn-primary w-100 py-3" type="submit">
                           Login
                         </button>
@@ -181,7 +198,6 @@ function Login() {
                     </div>
                   </form>
 
-                  {/* Show error if any */}
                   {error && <div className="alert alert-danger mt-3">{error}</div>}
                 </div>
               </div>

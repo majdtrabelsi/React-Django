@@ -43,20 +43,26 @@ function Offer() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     const offerData = { user_name: userName, title, description };
-
+  
     try {
       const response = await axios.post('http://127.0.0.1:8000/api/accounts/api/offers/', offerData, {
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
       });
+  
       console.log('Offer Created:', response.data);
-      // Optionally clear the form or redirect the user
+  
+      // ✅ Add new offer to state (so no need to refresh)
+      setOffers((prevOffers) => [...prevOffers, response.data]);
+  
+      // Reset form
+      setTitle('');
+      setDescription('');
+      setShowForm(false); // Optionally hide form after submission
     } catch (error) {
       console.error('Error creating offer:', error);
     }
   };
-
+  
   // Handle delete
   const handleDelete = (offerId) => {
     axios.delete(`http://127.0.0.1:8000/api/accounts/api/offers/${offerId}/`)
@@ -77,14 +83,15 @@ function Offer() {
     setEditingOfferId(offer.id);
     setTitle(offer.title);
     setDescription(offer.description);
-    setEditForm(true); // Show the edit form
+    setEditForm(true); // Enables update mode
+    setShowForm(true); // ✅ Force form to appear when editing
   };
-
+  
   // Handle update
   const handleUpdate = async (e) => {
     e.preventDefault();
     const offerData = { user_name: userName, title, description };
-
+  
     try {
       const response = await axios.put(
         `http://127.0.0.1:8000/api/accounts/api/offers/${editingOfferId}/`,
@@ -96,14 +103,23 @@ function Offer() {
         }
       );
       console.log('Offer Updated:', response.data);
-      // Update the offer in the state without re-fetching all offers
-      setOffers(offers.map(offer => (offer.id === editingOfferId ? response.data : offer)));
-      setEditForm(false); // Hide the edit form
-      setEditingOfferId(null); // Reset the editing ID
+  
+      // ✅ Update offer in local state
+      setOffers(offers.map((offer) =>
+        offer.id === editingOfferId ? response.data : offer
+      ));
+  
+      // Reset form
+      setEditForm(false);
+      setEditingOfferId(null);
+      setTitle('');
+      setDescription('');
+      setShowForm(false); // Hide form after update
     } catch (error) {
       console.error('Error updating offer:', error);
     }
   };
+  
   const navigate = useNavigate();
   const goToOfferPage = (id) => {
     navigate(`/Rq-offer/${id}`);};
@@ -118,44 +134,56 @@ function Offer() {
           </div>
         </div>
       </div>
-      <button> <Link to="/Rq-offer" className="dropdown-item">Rq Offer</Link></button>
 
-       <button> <Link to="/Offers-all" className="dropdown-item">All Offers</Link></button>
-      
+    <button className="btn btn-outline-primary mt-3 ms-5">
+      <Link to="/Offers-all" className="text-decoration-none text-primary">
+        All Offers
+      </Link>
+    </button>
 
       <div className="container-xxl py-6">
-        <button style={{ marginBottom: '2em', marginLeft: '40em' }} onClick={handleClick}>
-          <FontAwesomeIcon icon={faPlus} size="2x" color="green" />
-        </button>
-        {showForm && (
-          <div className="container">
-            <div className="row g-4">
-              <div className="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
-                <div className="service-item rounded h-100">
-                  <form onSubmit={editForm ? handleUpdate : handleSubmit}>
-                    <div className="p-5">
-                      <input
-                        type="text"
-                        id="title"
-                        value={title}
-                        placeholder="Title ..."
-                        onChange={(e) => setTitle(e.target.value)}
-                        required
-                      />
-                      <textarea
-                        style={{ marginTop: '1em' }}
-                        id="description"
-                        value={description}
-                        onChange={(e) => setDescription(e.target.value)}
-                        placeholder="Description ..."
-                        required
-                      />
-                    </div>
+        <div className="text-center mb-4">
+          <button className="btn btn-success" onClick={handleClick}>
+            <FontAwesomeIcon icon={faPlus} className="me-2" />
+            {showForm ? (editForm ? 'Edit Offer' : 'Close Form') : 'New Offer'}
+          </button>
 
-                    <button style={{ marginLeft: '8em' }} type="submit">
-                      {editForm ? 'Update Offer' : 'Create Offer'}
-                    </button>
-                  </form>
+        </div>
+
+        {showForm && (
+          <div className="container mb-5">
+            <div className="row justify-content-center">
+              <div className="col-lg-6 col-md-8">
+                <div className="card shadow">
+                  <div className="card-body">
+                    <form onSubmit={editForm ? handleUpdate : handleSubmit}>
+                      <div className="mb-3">
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Title..."
+                          value={title}
+                          onChange={(e) => setTitle(e.target.value)}
+                          required
+                        />
+                      </div>
+                      <div className="mb-3">
+                        <textarea
+                          className="form-control"
+                          rows="4"
+                          placeholder="Description..."
+                          value={description}
+                          onChange={(e) => setDescription(e.target.value)}
+                          required
+                        ></textarea>
+                      </div>
+                      <div className="text-center">
+                        <button className="btn btn-primary" type="submit">
+                          {editForm ? 'Update Offer' : 'Create Offer'}
+                        </button>
+                      </div>
+                    </form>
+                  </div>
                 </div>
               </div>
             </div>
@@ -164,33 +192,42 @@ function Offer() {
 
         <div className="row g-4">
           {offers.map((offer) => (
-            <div key={offer.id} className="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
-              <div className="service-item rounded h-100">
-                <div className="d-flex justify-content-between">
-                  <a onClick={() => handleEdit(offer)} className="service-btn bg-dark">
-                    <FontAwesomeIcon icon={faWrench} size="2x" />
-                  </a>
-                  
-                  <h2
-                    style={{ paddingTop: '10px', cursor: 'pointer' }}
+            <div key={offer.id} className="col-lg-4 col-md-6">
+              <div className="card h-100 shadow-sm">
+                <div className="card-header d-flex justify-content-between align-items-center bg-light">
+                  <button
+                    className="btn btn-sm btn-outline-secondary"
+                    onClick={() => handleEdit(offer)}
+                    title="Edit Offer"
+                  >
+                    <FontAwesomeIcon icon={faWrench} />
+                  </button>
+
+                  <h5
+                    className="mb-0 text-primary"
+                    style={{ cursor: 'pointer' }}
                     onClick={() => goToOfferPage(offer.id)}
                   >
                     {offer.title}
-                  </h2>
-                  
-                  <a onClick={() => handleDelete(offer.id)} className="service-btn">
-                    <FontAwesomeIcon icon={faTrash} size="2x" />
-                  </a>
-                </div>
+                  </h5>
 
-                <div className="p-5">
-                  <h5 className="mb-3">{offer.description}</h5>
+                  <button
+                    className="btn btn-sm btn-outline-danger"
+                    onClick={() => handleDelete(offer.id)}
+                    title="Delete Offer"
+                  >
+                    <FontAwesomeIcon icon={faTrash} />
+                  </button>
+                </div>
+                <div className="card-body">
+                  <p className="card-text">{offer.description}</p>
                 </div>
               </div>
             </div>
           ))}
         </div>
       </div>
+
     </div>
   );
 }
