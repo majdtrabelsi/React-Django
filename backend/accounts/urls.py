@@ -33,7 +33,8 @@ from .views import CommunityMessageList
 
 from django.urls import path
 from .views import LoginView,UserRegistrationProView,UserRegistrationPerView,UserRegistrationCompView,LogoutView,UserStatusView,contact_form,ProfileViewSet,CSRFTokenView
-from .views import social_media_links
+from .views import social_media_links,ChangePasswordView,accountdatas,BillingHistoryView,payment,payment_success
+from . import views
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
     path('registerpro/', UserRegistrationProView.as_view(), name='registerpro'),
@@ -53,5 +54,17 @@ urlpatterns = [
     path('messages/', CommunityMessageList.as_view(), name='accounts-messages'),
 
     
+    path('change-password/', ChangePasswordView.as_view(), name='change-password'),
+    path('accountdatas/', accountdatas, name='accountdatas'),
+    path('billing/status/', views.billing_status),
+    path('billing/update/', views.update_billing),
+    path('billing/delete/', views.DeleteCardView.as_view(), name='delete_card'),
+    path('billing/history/', BillingHistoryView.as_view(), name='billing_history'),
+    path('payment/', payment),
+    path('payment-success/', views.payment_success, name='payment_success'),
+    path('cancel-subscription/', views.cancel_subscription, name='cancel-subscription'),
+    path('subscription/status/', views.subscription_status, name='subscription-status'),
+    path('subscription/toggle-auto-renew/', views.toggle_auto_renew, name='toggle_auto_renew'),
+    path('force-downgrade/', views.force_downgrade),
 
 ]

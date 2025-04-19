@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom'; 
 import Navbar from './Navbar';
+import { useNavigate } from 'react-router-dom';
 
 function SignUpCompany() {
   const [isLoading, setIsLoading] = useState(true);
@@ -12,6 +13,7 @@ function SignUpCompany() {
   const [companyname, setCompanyName] = useState('');
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     setTimeout(() => {
@@ -48,24 +50,59 @@ function SignUpCompany() {
       confirm_password: confirmPassword,
     };
     console.log('Sending data:', data);
+    async function getCSRFToken() {
+      const response = await fetch('http://localhost:8000/api/accounts/csrf/', {
+        credentials: 'include',
+      });
+    
+      const data = await response.json();
+      return data.csrfToken;
+    }    
+    const csrfToken = await getCSRFToken();
     try {
+      
+
       const response = await fetch('http://localhost:8000/api/accounts/registercomp/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
-
+      
       const responseData = await response.json();
-      if (response.ok) {
-        console.log('Success:', responseData);
-        setSuccessMessage('Registration successful! Redirecting to login page...');
-        setTimeout(() => {
-          window.location.href = '/login';
-        }, 2000);
+      if (response.ok) {const loginData = {
+        email: email,
+        password: password,
+      };
+    
+      const loginResponse = await fetch('http://localhost:8000/api/accounts/login/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+        credentials: 'include', // Important!
+        body: JSON.stringify(loginData),
+      });
+      
+      if (loginResponse.ok) {
+        navigate('/payment', { state: { plan: 'company' } });
+      }
       } else {
-        setError(responseData.message || 'An error occurred');
+        if (!response.ok) {
+          if (responseData && typeof responseData === 'object') {
+            const errors = Object.entries(responseData)
+              .map(([field, messages]) => `${messages.join(', ')}`)
+              .join('\n');
+            setError(errors);
+          } else {
+            setError('An unknown error occurred');
+          }
+        }
+        
       }
     } catch (error) {
       console.error('Error:', error);

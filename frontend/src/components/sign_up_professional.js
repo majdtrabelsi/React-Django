@@ -33,25 +33,54 @@ function Register() {
       lastname: lastname,
       type: "professional",  // or whichever type you want to register
     };
-
+    async function getCSRFToken() {
+      const response = await fetch('http://localhost:8000/api/accounts/csrf/', {
+        credentials: 'include',
+      });
+    
+      const data = await response.json();
+      return data.csrfToken;
+    }    
     try {
+      const csrfToken = await getCSRFToken();
+
       const response = await fetch('http://localhost:8000/api/accounts/registerpro/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
         },
+        credentials: 'include',
         body: JSON.stringify(data),
       });
 
       const responseData = await response.json();
       if (response.ok) {
-        console.log('Success:', responseData);
-        navigate('/login');  // Redirect to the dashboard or any route you need
+        const loginData = {
+          email: email,
+          password: password,
+        };
+        
+        const csrfToken = await getCSRFToken(); // If needed again
+        
+        const loginResponse = await fetch('http://localhost:8000/api/accounts/login/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+          },
+          credentials: 'include', // Important!
+          body: JSON.stringify(loginData),
+        });
+        
+        if (loginResponse.ok) {
+          // ✅ Logged in successfully
+          navigate('/payment', { state: { plan: 'professional' } });
+        }
       } else {
         console.log('Error:', responseData);
-        // Handle multiple error messages and join them as a string
-        const errorMessages = Object.values(responseData).flat(); // Flattening all errors
-        setError(errorMessages.join(', '));  // Show all errors
+        const errorMessages = Object.values(responseData).flat();
+        setError(errorMessages.join(', '));
       }
     } catch (error) {
       console.error('Error:', error);

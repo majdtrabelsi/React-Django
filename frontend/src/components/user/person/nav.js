@@ -72,6 +72,7 @@ function Nav_person() {
               
             </div>
           </div>
+          <Link to="/Settings-Person" className="nav-item nav-link">Settings</Link>
           <Link to="/Notif"  className="nav-item nav-link"><FontAwesomeIcon icon={faBell}   /></Link>
         </div>
         <div>

@@ -79,6 +79,7 @@ SESSION_COOKIE_HTTPONLY = True  # Prevent JavaScript from accessing session cook
 SESSION_COOKIE_SECURE = False  # Set to True in production (HTTPS only)
 SESSION_EXPIRE_AT_BROWSER_CLOSE = False  # Session persists even after closing browser
 SESSION_COOKIE_AGE = 3600  # 1 hour session expiry
+SESSION_SAVE_EVERY_REQUEST = True
 
 
 CORS_ALLOW_CREDENTIALS = True
@@ -162,3 +163,14 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+
+
+STRIPE_SECRET_KEY = 'sk_test_51RC88KFJihK8kOFpx18p1nRxlnbCgtFrESjDxMYV3yZiutTr7FT7JwHcqGuVeE5MWJMFKJQoBDfTh9xt2CUJKmjZ00yEg7CIza'
+FRONTEND_URL = 'http://localhost:3000/payment/success/?session_id={CHECKOUT_SESSION_ID}'
+
+STRIPE_CANCEL_URL = 'http://localhost:3000/payment/cancel/'
+
+
+STRIPE_COMPANY_PRICE_ID = 'price_1RC9BoFJihK8kOFpYV3Vbjb5'
+STRIPE_PROFESSIONAL_PRICE_ID = 'price_1RC9BaFJihK8kOFpGrWV5t0m'

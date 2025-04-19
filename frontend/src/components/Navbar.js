@@ -1,10 +1,57 @@
 
-import React from 'react';
-import {Link} from 'react-router-dom';
+import React, { useEffect,useState } from 'react';
+import {Link, useNavigate} from 'react-router-dom';
 
 import '../styles/main.css';
 import '../styles/bootstrap.min.css';
 function Navbar() {
+  const navigate = useNavigate();
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const authRes = await fetch("http://localhost:8000/api/accounts/accountstatus/", {
+          credentials: 'include',
+        });
+        const authData = await authRes.json();
+
+        if (!authData.isAuthenticated) {
+         //navigate('/login');
+        }
+        else {
+          setIsLoggedIn(true);
+        }
+      } catch (error) {
+        console.error("Auth check failed:", error);
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
+  const handleLogout = async () => {
+    try {
+      const csrfRes = await fetch("http://localhost:8000/api/accounts/csrf/", {
+        credentials: "include",
+      });
+      const csrfData = await csrfRes.json();
+  
+      const logoutRes = await fetch("http://localhost:8000/api/accounts/logout/", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "X-CSRFToken": csrfData.csrfToken,
+        },
+      });
+  
+      if (logoutRes.ok) {
+        window.location.href = "/login";
+      } else {
+        console.error("Logout failed:", await logoutRes.json());
+      }
+    } catch (error) {
+      console.error("Logout error:", error);
+    }
+  };
   return (
     <nav className="navbar navbar-expand-lg navbar-light px-4 px-lg-5 py-3 py-lg-0">
       <a href="index.php" className="navbar-brand p-0">
@@ -18,23 +65,18 @@ function Navbar() {
         <div className="navbar-nav ms-auto py-0">
         <Link to="/" className="nav-item nav-link">Home</Link>
 
-          <a href="about.php" className="nav-item nav-link">About</a>
-          <a href="service.php" className="nav-item nav-link">Service</a>
-          <div className="nav-item dropdown">
-            <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">Pages</a>
-            <div className="dropdown-menu m-0">
-              <a href="feature.html" className="dropdown-item">Features</a>
-              <a href="quote.html" className="dropdown-item">Free Quote</a>
-              <a href="team.html" className="dropdown-item">Our Team</a>
-              <a href="testimonial.html" className="dropdown-item">Testimonial</a>
-              <a href="404.html" className="dropdown-item">404 Page</a>
-            </div>
-          </div>
+          <a href="/about" className="nav-item nav-link">About</a>
           <Link to="/contact" className="nav-item nav-link">Contact</Link>
         </div>
         <div>
-          <Link to="/signup" className="btn btn-light rounded-pill text-primary py-2 px-4 ms-lg-5">Sign up</Link> 
-          <a href="/login" className="btn btn-light rounded-pill text-primary py-2 px-4">Login</a>
+        {isLoggedIn ? (
+            <a className="btn btn-light rounded-pill text-primary py-2 px-4 ms-lg-3" onClick={handleLogout}>Logout</a>
+          ) : (
+            <>
+            <a className="btn btn-light rounded-pill text-primary py-2 px-4 ms-lg-3" href='/signup'>Register</a>
+            <a className="btn btn-light rounded-pill text-primary py-2 px-4 ms-lg-3" href='/login'>Login</a>
+            </>
+          )}
         </div>
       </div>
     </nav>

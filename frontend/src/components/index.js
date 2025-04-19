@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import '../styles/main.css';
 import '../styles/bootstrap.min.css';
 import 'font-awesome/css/font-awesome.min.css';
@@ -7,8 +7,42 @@ import Navbar from './Navbar';
 import heroImage from '../assets/images/hero.png';
 import aboutImage from '../assets/images/about.png';
 import newletter from '../assets/images/newsletter.png';
+import { useNavigate } from 'react-router-dom';
 
 function HeroSection(){
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [csrfToken, setCsrfToken] = useState('');
+    const navigate = useNavigate();
+      useEffect(() => {
+        fetch('http://localhost:8000/api/accounts/csrf/', {
+          credentials: 'include',
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            setCsrfToken(data.csrfToken);
+            setIsLoading(false);
+          })
+          .catch((err) => console.error('CSRF fetch error:', err));
+      }, []);
+      const redirectToDashboard = (userType) => {
+        if (userType === 'company') navigate('/index-company');
+        else if (userType === 'personal') navigate('/index-person');
+        else if (userType === 'professional') navigate('/index-professional');
+        else setError('User type is invalid!');
+      };
+      useEffect(() => {
+        fetch('http://localhost:8000/api/accounts/accountstatus/', {
+          credentials: 'include',
+        })
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.isAuthenticated) {
+              redirectToDashboard(data.userType);
+            }
+          })
+          .catch(() => setIsLoading(false));
+      }, []);
   return (
     
     <div className="container-xxl bg-white p-0">

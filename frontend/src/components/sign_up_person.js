@@ -14,14 +14,12 @@ function SignUpPerson() {
 
     const handleSubmit = async (event) => {
         event.preventDefault();
-
-        // Check if passwords match
         if (password !== confirmPassword) {
             setError("Passwords do not match");
             return;
         }
 
-        setIsLoading(true);  // Show loading spinner or disable button while submitting
+        setIsLoading(true);
 
         const data = {
             email: email,
@@ -43,10 +41,36 @@ function SignUpPerson() {
 
             const responseData = await response.json();
             if (response.ok) {
+                async function getCSRFToken() {
+                    const response = await fetch('http://localhost:8000/api/accounts/csrf/', {
+                      credentials: 'include',
+                    });
+                  
+                    const data = await response.json();
+                    return data.csrfToken;
+                  }
                 setSuccessMessage('Registration successful! Redirecting...');
-                setTimeout(() => {
-                    window.location.href = '/login'; // Redirect to login page
-                }, 2000);
+                const loginData = {
+                    email: email,
+                    password: password,
+                  };
+                  
+                  const csrfToken = await getCSRFToken(); // If needed again
+                  
+                  const loginResponse = await fetch('http://localhost:8000/api/accounts/login/', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRFToken': csrfToken,
+                    },
+                    credentials: 'include', // Important!
+                    body: JSON.stringify(loginData),
+                  });
+                  
+                  if (loginResponse.ok) {
+                    setTimeout(() => {
+                        window.location.href = '/index-person';
+                    }, 2000);}
             } else {
                 setError(responseData.message || 'An error occurred');
             }
