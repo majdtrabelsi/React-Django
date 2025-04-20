@@ -13,7 +13,7 @@ function Payment() {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
-  const selectedPlan = location.state?.plan || 'professional'; // fallback to professional
+  const selectedPlan = location.state?.plan || 'professional';
 
 
   useEffect(() => {
@@ -40,8 +40,7 @@ function Payment() {
         navigate('/');
         return;
       }
-
-      // Adjust payment API route depending on method
+      
       const route =
         method === 'stripe'
           ? '/payment/'
@@ -50,7 +49,7 @@ function Payment() {
           : '/payment-crypto/';
 
       console.log("Selected Plan:", selectedPlan);
-
+      
     const sessionRes = await fetch("http://localhost:8000/api/accounts/payment/", {
     method: "POST",
     headers: {
@@ -58,7 +57,9 @@ function Payment() {
         "X-CSRFToken": csrfToken,
     },
     credentials: 'include',
+    
     body: JSON.stringify({ plan: selectedPlan }),
+    
     });
 
     const sessionData = await sessionRes.json();
