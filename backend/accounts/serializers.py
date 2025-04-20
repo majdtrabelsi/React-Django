@@ -241,3 +241,15 @@ class RqofferSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rqoffer
         fields = ['id', 'name_person', 'name_company', 'id_offer','rp_offer']
+
+
+
+# community/serializers.py
+
+from rest_framework import serializers
+from .models import CommunityMessage
+
+class CommunityMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CommunityMessage
+        fields = '__all__'

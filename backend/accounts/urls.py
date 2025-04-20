@@ -28,6 +28,7 @@ router.register(r'rqoffers', RqofferViewSet, basename='rqoffer')
 
 
 
+from .views import CommunityMessageList
 
 
 from django.urls import path
@@ -49,6 +50,10 @@ urlpatterns = [
 
     path('api/company/', UserCompanyView.as_view(), name='user-list'),
     path('api/personpro/', UserPersonProView.as_view(), name='user-list'),
+
+    path('messages/', CommunityMessageList.as_view(), name='accounts-messages'),
+
+    
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),
     path('accountdatas/', accountdatas, name='accountdatas'),
     path('billing/status/', views.billing_status),

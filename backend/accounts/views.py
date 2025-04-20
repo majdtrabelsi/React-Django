@@ -902,4 +902,28 @@ def update_typing(request, offer_id):
         return Response({'status': 'updated'})
     except Exception as e:
         return Response({'error': str(e)}, status=400)
+# community/views.py
+
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import CommunityMessage
+from .serializers import CommunityMessageSerializer
+from rest_framework.permissions import IsAuthenticatedOrReadOnly
+
+class CommunityMessageList(APIView):
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request):
+        messages = CommunityMessage.objects.all().order_by('timestamp')
+        serializer = CommunityMessageSerializer(messages, many=True)
+        return Response(serializer.data)
+
+    def post(self, request):
+        serializer = CommunityMessageSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
 

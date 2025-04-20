@@ -86,16 +86,17 @@ function Rqoffer() {
         
 
             <div className="row g-4">
-                <table className="table">
+                <table className="table table-striped table-hover table-bordered align-middle text-center shadow-sm">
                     <thead>
-                    <tr>
+                        <tr>
                         <th scope="col">#</th>
                         <th scope="col">User</th>
                         <th scope="col">Company</th>
                         <th scope="col">Result</th>
-                    </tr>
+                        </tr>
                     </thead>
                     <tbody>
+                    
                         {offers.length > 0 ? (
                             offers.map((offer, index) => (
                             <tr key={offer.id}>
@@ -122,13 +123,37 @@ function Rqoffer() {
                             <td colSpan="4">No requests for this offer yet.</td>
                             </tr>
                         )}
+
                     </tbody>
+            </table>
 
-                </table>
-            </div>
+                <style>
+                {`
+                table thead {
+                    background-color:rgb(33, 201, 153);
+                    color: white;
+                }
 
-        </div>
-    </div>
+                table tbody tr:hover {
+                    background-color: #f2f2f2;
+                }
+
+                table td, table th {
+                    padding: 12px;
+                    vertical-align: middle;
+                }
+
+                table {
+                    border-radius: 8px;
+                    overflow: hidden;
+                }
+                `}
+                </style>
+
+                            </div>
+
+                        </div>
+                    </div>
   );
 }
 

@@ -56,20 +56,22 @@ function Portfolio() {
           setEditingPortfolio(null);
           setTitle('');
           setDescription('');
+          setShowForm(false); // also after update
+
         })
         .catch(error => console.error('Error updating portfolio:', error));
     } else {
       // Create new portfolio (POST request)
       axios.post('http://127.0.0.1:8000/api/accounts/api/portfolios/', portfolioData)
-        .then(response => {
-          // Update portfolios with the new one added
-          setPortfolios(prevPortfolios => [...prevPortfolios, response.data]);
+      .then(response => {
+        setPortfolios(prevPortfolios => [...prevPortfolios, response.data]);
 
-          // Clear the form fields
-          setTitle('');
-          setDescription('');
-        })
-        .catch(error => console.error('Error creating portfolio:', error));
+        setTitle('');
+        setDescription('');
+        setShowForm(false); // ✅ close the form after successful creation
+      })
+      .catch(error => console.error('Error creating portfolio:', error));
+
     }
   };
 
@@ -81,6 +83,7 @@ function Portfolio() {
       setEditingPortfolio(null);
       setTitle('');
       setDescription('');
+      
     }
   };
 
@@ -96,12 +99,13 @@ function Portfolio() {
 
   // Handle edit portfolio
   const handleEdit = (portfolio, event) => {
-    event.preventDefault();  // Prevent page reload
-    setEditingPortfolio(portfolio);  // Set the portfolio to be edited
-    setTitle(portfolio.title);        // Set the form fields with the portfolio data
+    event.preventDefault();
+    setEditingPortfolio(portfolio);
+    setTitle(portfolio.title);
     setDescription(portfolio.description);
+    setShowForm(true); // ✅ This line opens the form automatically
   };
-
+  
   return (
     <div className="container-xxl bg-white p-0">
       <div className="container-xxl position-relative p-0">
@@ -179,24 +183,22 @@ function Portfolio() {
                   {/* Use button instead of anchor to avoid reload */}
                   
 
-                  <a
-                    style={{ marginLeft: '2em' }}
-                    onClick={(e) => handleEdit(portfolio, e)}  // Delete button
-                    className="service-btn"
-                    href=""
-                  >
-                    <FontAwesomeIcon icon={faWrench} />
-                  </a>
+                  <button
+                      style={{ marginLeft: '2em' }}
+                      onClick={(e) => handleEdit(portfolio, e)}
+                      className="btn btn-sm btn-outline-dark"
+                    >
+                      <FontAwesomeIcon icon={faWrench} />
+                  </button>
 
+                  <button
+                      style={{ marginLeft: '1em', color: 'red' }}
+                      onClick={() => handleDelete(portfolio.id)}
+                      className="btn btn-sm btn-outline-danger"
+                    >
+                      <FontAwesomeIcon icon={faTrash} />
+                  </button>
 
-                  <a
-                    style={{ marginLeft: '1em', color: 'red' }}
-                    onClick={() => handleDelete(portfolio.id)}  // Delete button
-                    className="service-btn"
-                    href=""
-                  >
-                    <FontAwesomeIcon icon={faTrash} size="1x" />
-                  </a>
                 </div>
                 <span>{portfolio.description}</span>
               </div>

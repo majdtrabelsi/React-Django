@@ -30,6 +30,8 @@ import Offers_all  from './components/user/company/Offers_all.js';
 import Rq_offer  from './components/user/company/Rq_offer.js';
 import Notif  from './components/user/person/notif.js';
 import Chat  from './components/chat.js';
+import Community  from './components/user/person/Community.js';
+
 
 
 
@@ -83,6 +85,7 @@ function App() {
         <Route path="/Rq-offer/:id" element={<Rq_offer/>} />
         <Route path="/Notif" element={<Notif/>} />
         <Route path="/chat/:id" element={<Chat />} />
+        <Route path="/Community" element={<Community/>} />
 
 
 

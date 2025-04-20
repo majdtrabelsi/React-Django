@@ -60,7 +60,7 @@ function Nav_person() {
               
             </div>
           </div>
-          <Link to="/Profile-person" className="nav-item nav-link">Community</Link>
+          <Link to="/Community" className="nav-item nav-link">Community</Link>
 
           
           <div className="nav-item dropdown">

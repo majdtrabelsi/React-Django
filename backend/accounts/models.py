@@ -229,3 +229,15 @@ class ChatStatus(models.Model):
     offer = models.OneToOneField(Rqoffer, on_delete=models.CASCADE)
     chat_closed = models.BooleanField(default=False)
     typing_user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
+# community/models.py
+
+from django.db import models
+from django.utils import timezone
+
+class CommunityMessage(models.Model):
+    sender = models.CharField(max_length=100)
+    content = models.TextField()
+    timestamp = models.DateTimeField(default=timezone.now)
+
+    def __str__(self):
+        return f"{self.sender} at {self.timestamp}"
