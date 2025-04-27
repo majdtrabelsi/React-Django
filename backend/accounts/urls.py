@@ -70,5 +70,9 @@ urlpatterns = [
     path('subscription/status/', views.subscription_status, name='subscription-status'),
     path('subscription/toggle-auto-renew/', views.toggle_auto_renew, name='toggle_auto_renew'),
     path('force-downgrade/', views.force_downgrade),
+    path('chat/<int:offer_id>/', views.get_messages),
+    path('chat/<int:offer_id>/send/', views.send_message),
+    path('chat/<int:offer_id>/close/', views.close_chat),
+    path('chat-status/<int:offer_id>/', views.chat_status),
 
 ]

@@ -189,9 +189,9 @@ class BillingHistory(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     amount = models.DecimalField(max_digits=8, decimal_places=2)
     description = models.CharField(max_length=255)
-    created_at = models.DateTimeField(auto_now_add=True)
+    created_at = models.DateTimeField()
     status = models.CharField(max_length=50, default='paid')  # or 'failed', etc.
-    stripe_invoice_id = models.CharField(max_length=100, blank=True, null=True)
+    stripe_invoice_id = models.CharField(max_length=100, blank=True, null=True, unique=True)
     stripe_invoice_url = models.URLField(blank=True, null=True)
 
     def __str__(self):
@@ -203,6 +203,7 @@ class Rqoffer(models.Model):
     name_company = models.CharField(max_length=255)
     id_offer = models.CharField(max_length=100)
     rp_offer = models.CharField(max_length=100, blank=True, default="")
+    chat_closed = models.BooleanField(default=False)
     
 
     def __str__(self):
@@ -214,6 +215,20 @@ class Rqoffer(models.Model):
         ]
 
 
+class ChatMessage(models.Model):
+    offer = models.ForeignKey(Rqoffer, on_delete=models.CASCADE)
+    sender = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    text = models.TextField()
+    timestamp = models.DateTimeField(auto_now_add=True)
+    is_read = models.BooleanField(default=False)
+
+    def __str__(self):
+        return f"{self.sender} - {self.text[:20]}"
+
+class ChatStatus(models.Model):
+    offer = models.OneToOneField(Rqoffer, on_delete=models.CASCADE)
+    chat_closed = models.BooleanField(default=False)
+    typing_user = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL)
 # community/models.py
 
 # community/models.py

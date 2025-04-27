@@ -188,7 +188,7 @@ class LogoutView(APIView):
 class UserStatusView(APIView):
     def get(self, request):
         if request.user.is_authenticated:
-            return Response({"isAuthenticated": True, "user": request.user.email, "userType": request.user.type, "is_paid": request.user.is_paid})
+            return Response({"isAuthenticated": True, "user": request.user.email, "userType": request.user.type, "is_paid": request.user.is_paid, "user_id": request.user.id})
         return Response({"isAuthenticated": False}, status=status.HTTP_401_UNAUTHORIZED)
 
 
@@ -334,15 +334,6 @@ class OfferViewSet(viewsets.ModelViewSet):
     queryset = Offer.objects.all()
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['user_name']  # Allow filtering by 'user_name'
-
-
-
-
-
-
-
-
-
 
 
 
@@ -510,19 +501,60 @@ class DeleteCardView(APIView):
         except Exception as e:
             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-class BillingHistoryView(ListAPIView):
-    serializer_class = BillingHistorySerializer
+class BillingHistoryView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get_queryset(self):
-        return BillingHistory.objects.filter(user=self.request.user).order_by('-created_at')
+    def get(self, request, *args, **kwargs):
+        user = request.user
+
+        try:
+            stripe.api_key = settings.STRIPE_SECRET_KEY
+            latest_invoice = BillingHistory.objects.filter(user=user).order_by('-created_at').first()
+            if not latest_invoice or not latest_invoice.stripe_invoice_id:
+                raise Exception("No invoice available to trace customer.")
+
+            # Get session from invoice
+            invoice = stripe.Invoice.retrieve(latest_invoice.stripe_invoice_id)
+            customer_id = invoice.customer
+
+            invoices = stripe.Invoice.list(customer=customer_id, limit=10)
+
+            for invoice in invoices.auto_paging_iter():
+                if not invoice.paid:
+                    continue
+
+                paid_ts = invoice.status_transitions.get("paid_at") or invoice.created
+
+                BillingHistory.objects.get_or_create(
+                    stripe_invoice_id=invoice.id,
+                    defaults={
+                        'user': user,
+                        'amount': invoice.amount_paid / 100,
+                        'description': "Auto-renewal payment",
+                        'created_at': datetime.fromtimestamp(paid_ts),
+                        'status': 'paid',
+                        'stripe_invoice_url': invoice.hosted_invoice_url,
+                    }
+                )
+
+        except Exception as e:
+            print("")
+
+        history = BillingHistory.objects.filter(user=user).order_by('-created_at')
+        serializer = BillingHistorySerializer(history, many=True)
+        return Response(serializer.data)
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def payment(request):
     try:
         user = request.user
-        plan_type = request.data.get('plan', 'company')
+        plan_type = request.data.get('plan')
+
+        # Map personal users to the 'professional' plan
+        if plan_type == 'personal':
+            plan_type = 'professional'
 
         price_id_map = {
             'company': settings.STRIPE_COMPANY_PRICE_ID,
@@ -543,15 +575,18 @@ def payment(request):
             success_url=f"{settings.FRONTEND_URL}",
             cancel_url=f"{settings.FRONTEND_URL}",
             customer_email=user.email,
-            metadata={'user_id': str(user.id)},
+            metadata={
+                'user_id': str(user.id),
+                'upgrade_to': 'professional' if user.type == 'personal' else ''
+            },
         )
 
         return Response({'url': session.url})
 
     except Exception as e:
         print("Stripe error:", str(e))
-        return Response({'detail': 'Something went wrong creating the session.'}, 
-                       status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        return Response({'detail': 'Something went wrong creating the session.'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(['GET'])
 def payment_success(request):
@@ -570,9 +605,15 @@ def payment_success(request):
         user = User.objects.get(id=user_id)
         user.is_paid = True
         user.subscription_id = subscription.id
+
+        # Upgrade if needed
+        upgrade_to = session.metadata.get('upgrade_to')
+        if upgrade_to:
+            user.type = upgrade_to  # 🔥 change from personal to professional
+
         user.save()
 
-        # ✅ Get public invoice URL
+        # ✅ Invoice public URL
         invoice_id = session.invoice or session.id
         invoice_url = None
 
@@ -587,7 +628,7 @@ def payment_success(request):
             created_at=datetime.fromtimestamp(session.created),
             status='paid',
             stripe_invoice_id=invoice_id,
-            stripe_invoice_url=invoice_url  # ✅ save public invoice link
+            stripe_invoice_url=invoice_url
         )
 
         return Response({'detail': 'Payment verified and user updated'})
@@ -595,6 +636,7 @@ def payment_success(request):
     except Exception as e:
         print("Payment verification error:", str(e))
         return Response({'detail': 'Could not verify your payment'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -656,7 +698,8 @@ def subscription_status(request):
             "plan": plan_name,
             "status": status,
             "renewal_date": renewal_date,
-            "auto_renewal": auto_renewal
+            "auto_renewal": auto_renewal,
+            "cancel_at_period_end": subscription.get("cancel_at_period_end", False)
         })
 
     except Exception as e:
@@ -664,6 +707,10 @@ def subscription_status(request):
         return Response({"error": "Unable to fetch subscription status."}, status=500)
 
 
+
+from .models import BillingInfo
+from .utils import decrypt_value
+import stripe
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -674,7 +721,16 @@ def toggle_auto_renew(request):
         print(f"❌ No subscription ID for user {user.email}")
         return Response({'error': 'No active subscription.'}, status=400)
 
+    billing = BillingInfo.objects.filter(user=user).first()
+    if not billing or not billing.has_card():
+        print(f"❌ No credit card on file for user {user.email}")
+        return Response({'error': 'You must add a credit card before enabling auto-renew.'}, status=400)
+
     try:
+        # Optional: Test the card now with a $1 off-session charge, <-
+        # charge_saved_card(user, amount_cents=100)
+        
+
         subscription = stripe.Subscription.retrieve(user.subscription_id)
         current = subscription.get('cancel_at_period_end', False)
 
@@ -685,13 +741,52 @@ def toggle_auto_renew(request):
 
         print(f"🔁 Auto-renew toggled: {not current} for user {user.email}")
         return Response({
-            'message': f"Auto-renew has been {'disabled' if not current else 'enabled'}.",
+            'message': f"Auto-renew has been {'enabled' if not current else 'disabled'}.",
             'auto_renewal': not updated['cancel_at_period_end']
         })
 
     except Exception as e:
         print("❌ Error toggling auto-renew:", str(e))
         return Response({'error': 'Failed to update auto-renew setting.'}, status=500)
+
+def charge_saved_card(user, amount_cents):
+    billing = getattr(user, 'billing_info', None)
+    if not billing or not billing.has_card():
+        raise Exception("No saved card found for this user.")
+    try:
+        card_number = decrypt_value(billing.encrypted_card_number)
+        expiry = decrypt_value(billing.encrypted_expiry)
+        exp_month, exp_year = expiry.split('/')
+        cvc = decrypt_value(billing.encrypted_cvv)
+    except Exception as e:
+        raise Exception(f"Decryption failed: {str(e)}")
+
+    try:
+        payment_method = stripe.PaymentMethod.create(
+            type="card",
+            card={
+                "number": card_number,
+                "exp_month": exp_month,
+                "exp_year": f"20{exp_year}" if len(exp_year) == 2 else exp_year,
+                "cvc": cvc,
+            },
+        )
+    except stripe.error.CardError as e:
+        raise Exception("Stripe card error: " + str(e))
+
+    try:
+        payment_intent = stripe.PaymentIntent.create(
+            amount=amount_cents,
+            currency='usd',
+            payment_method=payment_method.id,
+            confirm=True,
+            off_session=True,
+        )
+        return payment_intent
+    except stripe.error.CardError as e:
+        raise Exception("Card error: " + str(e))
+    except stripe.error.StripeError as e:
+        raise Exception("Stripe error: " + str(e))
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -707,18 +802,106 @@ def force_downgrade(request):
 from rest_framework import viewsets
 from .models import Rqoffer
 from .serializers import RqofferSerializer
+from .models import ChatStatus
 
 class RqofferViewSet(viewsets.ModelViewSet):
     queryset = Rqoffer.objects.all()
     serializer_class = RqofferSerializer
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['id_offer']  # Allow filtering by 'user_name'
+from .models import ChatMessage
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def get_messages(request, offer_id):
+    messages = ChatMessage.objects.filter(offer_id=offer_id).order_by('timestamp')
+    status = ChatStatus.objects.filter(offer_id=offer_id).first()
+
+    # Mark all unread messages to this user as read
+    unread = messages.filter(is_read=False).exclude(sender=request.user)
+    unread.update(is_read=True)
+
+    response_data = []
+    for m in messages:
+        if m.sender.type == 'company':
+            sender_name = m.sender.companyname
+        else:
+            sender_name = f"{m.sender.first_name} {m.sender.last_name}"
+
+        response_data.append({
+            'id': m.id,
+            'text': m.text,
+            'sender': m.sender.id,
+            'sender_name': sender_name,
+            'timestamp': m.timestamp,
+            'is_read': m.is_read,
+        })
+
+    return Response({
+        'messages': response_data,
+        'typing': status.typing_user != request.user if status else False
+    })
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def send_message(request, offer_id):
+    from .models import Rqoffer  # add this at the top if it's not already imported
+
+    try:
+        chat = Rqoffer.objects.get(id=offer_id)
+    except Rqoffer.DoesNotExist:
+        return Response({'error': 'Chat not found'}, status=404)
+
+    if chat.chat_closed:
+        return Response({'error': 'Chat is closed'}, status=403)
+
+    text = request.data.get('text')
+    if not text:
+        return Response({'error': 'Empty message'}, status=400)
+
+    message = ChatMessage.objects.create(
+        offer_id=offer_id,
+        sender=request.user,
+        text=text,
+    )
+
+    return Response({'status': 'sent', 'message_id': message.id})
 
 
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def chat_status(request, offer_id):
+    try:
+        chat = Rqoffer.objects.get(id=offer_id)
+        return Response({'chat_closed': chat.chat_closed})
+    except Rqoffer.DoesNotExist:
+        return Response({'error': 'Chat not found'}, status=404)
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def close_chat(request, offer_id):
+    try:
+        chat = Rqoffer.objects.get(id=offer_id)
+        if request.user.type != 'company':
+            return Response({'error': 'Only companies can close the chat.'}, status=403)
+
+        chat.chat_closed = True
+        chat.save()
+        return Response({'message': 'Chat closed successfully'})
+    except Rqoffer.DoesNotExist:
+        return Response({'error': 'Chat not found'}, status=404)
 
 
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def update_typing(request, offer_id):
+    try:
+        status, _ = ChatStatus.objects.get_or_create(offer_id=offer_id)
+        status.typing_user = request.user
+        status.save()
+        return Response({'status': 'updated'})
+    except Exception as e:
+        return Response({'error': str(e)}, status=400)
 # community/views.py
 # community/views.py
 # community/views.py

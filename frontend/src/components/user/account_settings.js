@@ -54,7 +54,7 @@ function SettingAccountPage() {
       case 'BillingHistory':
         return <BillingHistory />;
       case 'Subscription':
-        return <SubscriptionManagement accountType={accountType} />;
+        return <SubscriptionManagement accountType={accountType} setActiveTab={setActiveTab} />;
       case 'ChangePassword':
         return <ChangePassword />;
       default:
@@ -510,91 +510,122 @@ const BillingHistory = () => {
     </div>
   );
 };
-const SubscriptionManagement = ({ accountType }) => {
+const SubscriptionManagement = ({ accountType, setActiveTab }) => {
     const [subscriptionInfo, setSubscriptionInfo] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [account_type, setAccountType] = useState(null);
+    const [csrf, setCsrfToken] = useState();
+    const [message, setMessage] = useState('');
     const navigate = useNavigate();
   
     useEffect(() => {
-      fetch('http://localhost:8000/api/accounts/accountdatas/', {
+      fetch("http://localhost:8000/api/accounts/csrf/", {
         credentials: 'include',
       })
         .then((res) => res.json())
-        .then((data) => setAccountType(data.account_type))
-        .catch((err) => console.error("Error fetching account data:", err));
+        .then((data) => setCsrfToken(data.csrfToken));
     }, []);
-
-    useEffect(() => {
-        fetch('http://localhost:8000/api/accounts/subscription/status/', {
-          credentials: 'include',
-        })
-          .then((res) => res.json())
-          .then((data) => {
-            console.log("✅ Subscription data:", data);
-            setSubscriptionInfo(data);
-          })
-          .catch((error) => {
-            console.error("Error fetching subscription data:", error);
-          })
-          .finally(() => {
-            setLoading(false);
-          });
-      }, []);
-      
-    useEffect(() => {
-        if (
-          !subscriptionInfo ||
-          !subscriptionInfo.renewal_date ||
-          subscriptionInfo.plan?.toLowerCase() === 'free'
-        ) return;
-      
-        const now = new Date();
-        const renewal = new Date(subscriptionInfo.renewal_date);
-      
-        if (
-          subscriptionInfo.status === 'active' &&
-          renewal < now &&
-          !subscriptionInfo.auto_renewal
-        ) {
-          fetch("http://localhost:8000/api/accounts/force-downgrade/", {
-            method: "POST",
-            credentials: "include",
-          }).then(() => window.location.reload());
-        }
-      }, [subscriptionInfo]);
-      
-      
   
-      const handleAutoRenewToggle = async () => {
+    useEffect(() => {
+      fetch("http://localhost:8000/api/accounts/subscription/status/", {
+        credentials: "include",
+      })
+        .then((res) => res.json())
+        .then((data) => setSubscriptionInfo(data))
+        .catch((err) => console.error("Error loading subscription:", err))
+        .finally(() => setLoading(false));
+    }, []);
+  
+    useEffect(() => {
+      if (
+        !subscriptionInfo ||
+        !subscriptionInfo.renewal_date ||
+        subscriptionInfo.plan?.toLowerCase() === "free"
+      ) return;
+  
+      const now = new Date();
+      const renewal = new Date(subscriptionInfo.renewal_date);
+  
+      if (
+        subscriptionInfo.status === "active" &&
+        renewal < now &&
+        !subscriptionInfo.auto_renewal
+      ) {
+        fetch("http://localhost:8000/api/accounts/force-downgrade/", {
+          method: "POST",
+          credentials: "include",
+        }).then(() => window.location.reload());
+      }
+    }, [subscriptionInfo]);
+  
+    const handleCancelSubscription = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/accounts/cancel-subscription/", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrf,
+          },
+        });
+  
+        const data = await res.json();
+        if (res.ok) {
+          setMessage(data.detail || "Subscription cancelled.");
+          setSubscriptionInfo((prev) => ({
+            ...prev,
+            cancel_at_period_end: true,
+          }));
+        } else {
+          setMessage(data.detail || "Failed to cancel subscription.");
+        }
+      } catch (err) {
+        setMessage("Error cancelling subscription.");
+      }
+    };
+  
+    const handleAutoRenewToggle = async () => {
         try {
+          // First check if card exists
+          const cardRes = await fetch("http://localhost:8000/api/accounts/billing/status/", {
+            credentials: "include",
+          });
+          const cardData = await cardRes.json();
+      
+          if (!cardData.has_credit_card) {
+            alert("⚠️ You need to add a credit card before enabling auto-renewal.");
+            setActiveTab("Billing"); // redirect to billing tab
+            return;
+          }
+      
+          // Fetch CSRF
           const csrfRes = await fetch("http://localhost:8000/api/accounts/csrf/", {
             credentials: "include",
           });
           const csrfData = await csrfRes.json();
-          const csrfToken = csrfData.csrfToken;
       
-          
           const res = await fetch("http://localhost:8000/api/accounts/subscription/toggle-auto-renew/", {
             method: "POST",
             credentials: "include",
             headers: {
               "Content-Type": "application/json",
-              "X-CSRFToken": csrfToken,
+              "X-CSRFToken": csrfData.csrfToken,
             },
           });
       
           const data = await res.json();
-      
           if (res.ok) {
-            alert(data.message || "Auto-renewal updated.");
-            window.location.reload();
+            setSubscriptionInfo((prev) => ({
+              ...prev,
+              auto_renewal: data.auto_renewal,
+              cancel_at_period_end: !data.auto_renewal,
+            }));
+            setMessage(data.message || "Auto-renewal status updated.");
           } else {
-            alert(data.error || "Unable to update auto-renew.");
+            setMessage(data.error || "Unable to update auto-renew.");
           }
         } catch (err) {
           console.error("Auto-renew toggle error:", err);
-          alert("An error occurred while toggling auto-renew.");
+          setMessage("An error occurred while toggling auto-renew.");
         }
       };
       
@@ -602,54 +633,87 @@ const SubscriptionManagement = ({ accountType }) => {
     if (loading) return <div className="text-center">Loading subscription info...</div>;
     if (!subscriptionInfo) return <div className="text-center">No subscription data available.</div>;
   
-    const isFree = (subscriptionInfo.plan || '').toLowerCase() === 'free';
+    const isFree = (subscriptionInfo.plan || "").toLowerCase() === "free";
   
     return (
       <div>
         <h3>Subscription Management</h3>
         <div className="card shadow-sm">
           <div className="card-body">
-            <h5 className="card-title">Current Plan: {subscriptionInfo.plan || 'N/A'}</h5>
+            <h5 className="card-title">Current Plan: {subscriptionInfo.plan || "N/A"}</h5>
             <p><strong>Status:</strong> {subscriptionInfo.status}</p>
-            <p><strong>Renewal Date:</strong> {subscriptionInfo.renewal_date ? new Date(subscriptionInfo.renewal_date).toLocaleDateString() : 'N/A'}</p>
+            <p><strong>Renewal Date:</strong> {subscriptionInfo.renewal_date ? new Date(subscriptionInfo.renewal_date).toLocaleDateString() : "N/A"}</p>
   
-            {!isFree &&(subscriptionInfo.auto_renewal ? (
-              <div className="alert alert-success mt-3">
-                🌟 Your subscription is set to auto-renew!
+            {!isFree && subscriptionInfo.cancel_at_period_end && (
+              <>
+                <div className="alert alert-warning">
+                  ⏳ Subscription will cancel at period end ({new Date(subscriptionInfo.renewal_date).toLocaleDateString()}).
+                </div>
+                <div className="alert alert-danger">
+                  🚨 You will lose access to premium features after this date unless you renew.
+                </div>
+              </>
+            )}
+  
+            {!isFree && !subscriptionInfo.cancel_at_period_end &&  (
+              <div className={`alert mt-3 ${subscriptionInfo.auto_renewal ? "alert-success" : "alert-warning"}`}>
+                {subscriptionInfo.auto_renewal
+                  ? "🌟 Your subscription is set to auto-renew!"
+                  : "⚠️ Auto-renewal is not enabled. Enable it for continuous service."}
               </div>
-            ) : (
-              <div className="alert alert-warning mt-3">
-                ⚠️ Auto-renewal is not enabled. Please enable it for continuous service.
-              </div>
-            ))}
+            )}
   
             <div className="mt-4">
               {!isFree ? (
-                <>
+                subscriptionInfo.cancel_at_period_end ? (
                   <button
-                    className="btn btn-outline-warning me-2"
-                    onClick={handleAutoRenewToggle}
-                    >
-                    {subscriptionInfo.auto_renewal ? "Disable Auto-Renew" : "Enable Auto-Renew"}
+                    className="btn btn-outline-primary"
+                    onClick={() => navigate('/payment', { state: { plan: accountType } })}
+                  >
+                    Renew Now
                   </button>
-                  <button className="btn btn-outline-primary me-2">Update Payment Method</button>
-                  <button className="btn btn-outline-danger me-2">Cancel Subscription</button>
-
-                </>
+                ) : (
+                  <>
+                    <button
+                      className="btn btn-outline-warning me-2"
+                      onClick={handleAutoRenewToggle}
+                    >
+                      {subscriptionInfo.auto_renewal ? "Disable Auto-Renew" : "Enable Auto-Renew"}
+                    </button>
+                    <button
+                      className="btn btn-outline-primary me-2"
+                      onClick={() => setActiveTab("Billing")}
+                    >
+                      Update Payment Method
+                    </button>
+                    <button
+                      className="btn btn-outline-danger me-2"
+                      onClick={handleCancelSubscription}
+                      disabled={subscriptionInfo.cancel_at_period_end}
+                    >
+                      Cancel Subscription
+                    </button>
+                  </>
+                )
               ) : (
                 <button
                   className="btn btn-outline-primary me-2"
-                  onClick={() => navigate('/payment', { state: { plan: account_type } })}
+                  onClick={() => navigate('/payment', { state: { plan: accountType } })}
                 >
                   Pay Subscription
                 </button>
               )}
             </div>
+  
+            {message && (
+              <div className="alert alert-info mt-4">{message}</div>
+            )}
           </div>
         </div>
       </div>
     );
-  };
+  };  
+  
   
   
 // === CHANGE PASSWORD ===
