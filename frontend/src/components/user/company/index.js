@@ -45,7 +45,9 @@ function Index_company(){
       {/* Hero Section Start */}
       
       <div className="container-xxl position-relative p-0"> 
-        <Nav_company/>
+            <div style={{ position: 'sticky', top: 0, zIndex: 1000, backgroundColor: 'white' }}>
+                <Nav_company />
+            </div>
 
         <div className="container-xxl bg-primary hero-header">
             

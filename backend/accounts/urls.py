@@ -11,6 +11,8 @@ from .views import ExperienceViewSet
 from .views import EducationViewSet
 from .views import SkillViewSet
 from .views import RqofferViewSet
+from .views import PostListCreateView, CategoryListCreateView, CategoryDetailView
+from .views import ReplyListCreateView
 
 
 
@@ -28,7 +30,6 @@ router.register(r'rqoffers', RqofferViewSet, basename='rqoffer')
 
 
 
-from .views import CommunityMessageList
 
 
 from django.urls import path
@@ -50,8 +51,11 @@ urlpatterns = [
 
     path('api/company/', UserCompanyView.as_view(), name='user-list'),
     path('api/personpro/', UserPersonProView.as_view(), name='user-list'),
+    path('posts/', PostListCreateView.as_view(), name='post-list-create'),
+    path('categories/', CategoryListCreateView.as_view(), name='category-list-create'),
+    path('categories/<int:id>/', CategoryDetailView.as_view(), name='category-detail'),
+    path('replies/', ReplyListCreateView.as_view(), name='reply-list-create'),
 
-    path('messages/', CommunityMessageList.as_view(), name='accounts-messages'),
 
     
     path('change-password/', ChangePasswordView.as_view(), name='change-password'),

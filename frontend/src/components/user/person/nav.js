@@ -3,7 +3,7 @@ import React from 'react';
 import {Link} from 'react-router-dom';
 import '../../../App.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faBell} from '@fortawesome/free-solid-svg-icons';
+import { faBell, faStar} from '@fortawesome/free-solid-svg-icons';
 
 function Nav_person() {
   const handleLogout = async () => {
@@ -74,6 +74,8 @@ function Nav_person() {
           </div>
           <Link to="/Settings-Person" className="nav-item nav-link">Settings</Link>
           <Link to="/Notif"  className="nav-item nav-link"><FontAwesomeIcon icon={faBell}   /></Link>
+          <FontAwesomeIcon  icon={faStar} className="nav-item nav-link"/>
+          
         </div>
         <div>
           <a className="btn btn-light rounded-pill text-primary py-2 px-4 ms-lg-5" onClick={handleLogout}>Logout</a>

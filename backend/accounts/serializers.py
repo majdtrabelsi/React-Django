@@ -243,13 +243,34 @@ class RqofferSerializer(serializers.ModelSerializer):
         fields = ['id', 'name_person', 'name_company', 'id_offer','rp_offer']
 
 
-
+# community/serializers.py
 # community/serializers.py
 
 from rest_framework import serializers
-from .models import CommunityMessage
+from .models import Post, Category
 
-class CommunityMessageSerializer(serializers.ModelSerializer):
+class CategorySerializer(serializers.ModelSerializer):
     class Meta:
-        model = CommunityMessage
-        fields = '__all__'
+        model = Category
+        fields = ['id', 'name']
+
+class PostSerializer(serializers.ModelSerializer):
+    category = serializers.SlugRelatedField(
+        queryset=Category.objects.all(),
+        slug_field='name'
+    )
+
+    class Meta:
+        model = Post
+        fields = ['id', 'name', 'message', 'category']
+
+
+
+# community/serializers.py
+
+from .models import Reply
+
+class ReplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Reply
+        fields = ['id', 'post', 'name', 'message', 'created_at']

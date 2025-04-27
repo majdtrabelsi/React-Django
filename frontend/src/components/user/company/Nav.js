@@ -48,6 +48,7 @@ function Nav_company() {
         <div className="navbar-nav ms-auto py-0">
           <Link to="/index-company" className="nav-item nav-link">Home</Link>
           <Link to="/Profile-company" className="nav-item nav-link">Profile</Link>
+          <Link to="/Community-company" className="nav-item nav-link">Community</Link>
           
 
           
