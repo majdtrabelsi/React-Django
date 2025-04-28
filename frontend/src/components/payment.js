@@ -5,28 +5,68 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faBitcoin, faPaypal } from '@fortawesome/free-brands-svg-icons';
 import { faCreditCard } from '@fortawesome/free-solid-svg-icons';
 
-
-
 function Payment() {
   const [csrfToken, setCsrfToken] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [autoLoginTried, setAutoLoginTried] = useState(false);
+
   const navigate = useNavigate();
   const location = useLocation();
-  const selectedPlan = location.state?.plan || 'professional';
 
+  const selectedPlan = location.state?.plan;
+  const email = location.state?.email;
+  const password = location.state?.password;
 
+  
   useEffect(() => {
     fetch("http://localhost:8000/api/accounts/csrf/", {
       credentials: 'include',
     })
       .then((res) => res.json())
       .then((data) => setCsrfToken(data.csrfToken))
-      .catch((error) => console.error("Error fetching CSRF token:", error));
+      .catch((err) => {
+        console.error("CSRF Error:", err);
+        setError("Could not fetch CSRF token.");
+      });
   }, []);
+
+  useEffect(() => {
+    if(!selectedPlan ){
+        navigate('/login');
+      }
+    if (!email || !password || autoLoginTried) return;
+
+    const autoLogin = async () => {
+      try {
+        const res = await fetch("http://localhost:8000/api/accounts/login/", {
+          method: "POST",
+          credentials: "include",
+          headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrfToken,
+          },
+          body: JSON.stringify({ email, password }),
+        });
+
+        const result = await res.json();
+        console.log("✅ Auto-login result:", result);
+
+        setAutoLoginTried(true);
+      } catch (err) {
+        console.error("❌ Auto-login failed", err);
+        setError("Auto-login failed.");
+      }
+    };
+
+    autoLogin();
+  }, [csrfToken, email, password, autoLoginTried]);
+
 
   const handlePayment = async (method) => {
     setLoading(true);
+    setError('');
+
     try {
       const authRes = await fetch("http://localhost:8000/api/accounts/accountstatus/", {
         credentials: 'include',
@@ -36,34 +76,27 @@ function Payment() {
       if (!authData.isAuthenticated) {
         navigate('/login');
         return;
-      } else if (authData.is_paid) {
+      }
+
+      if (authData.is_paid) {
         navigate('/');
         return;
       }
-      
-      const route =
-        method === 'stripe'
-          ? '/payment/'
-          : method === 'paypal'
-          ? '/payment-paypal/'
-          : '/payment-crypto/';
 
-      console.log("Selected Plan:", selectedPlan);
-      
-    const sessionRes = await fetch("http://localhost:8000/api/accounts/payment/", {
-    method: "POST",
-    headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken": csrfToken,
-    },
-    credentials: 'include',
-    
-    body: JSON.stringify({ plan: selectedPlan }),
-    
-    });
+      await new Promise((resolve) => setTimeout(resolve, 500));
 
-    const sessionData = await sessionRes.json();
-    console.log("Session Response:", sessionData)
+      const sessionRes = await fetch("http://localhost:8000/api/accounts/payment/", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken": csrfToken,
+        },
+        credentials: 'include',
+        body: JSON.stringify({ plan: selectedPlan }),
+      });
+
+      const sessionData = await sessionRes.json();
+
       if (sessionRes.ok && sessionData.url) {
         window.location.href = sessionData.url;
       } else {
@@ -83,13 +116,14 @@ function Payment() {
       <div className="container py-5">
         <div className="text-center">
           <h2>Select Your Payment Method</h2>
-          <p className="mb-4">Choose a secure way to complete your payment for the <strong><h5 className="text-center mt-3">Selected Plan: {selectedPlan === 'company' ? 'Company ($25)' : 'Professional ($10)'}</h5>
-          </strong>.</p>
+          <h5 className="text-center mt-3">
+            Selected Plan: {selectedPlan === 'company' ? 'Company ($25)' : 'Professional ($10)'}
+          </h5>
 
-          {error && <div className="alert alert-danger">{error}</div>}
-          {loading && <h5>Redirecting...</h5>}
+          {error && <div className="alert alert-danger mt-3">{error}</div>}
+          {loading && <div className="alert alert-info mt-3">⏳ Redirecting to payment gateway...</div>}
 
-          <div className="d-flex justify-content-center gap-3 flex-wrap">
+          <div className="d-flex justify-content-center gap-3 flex-wrap mt-4">
             <button
               className="btn btn-outline-primary px-4 py-2"
               onClick={() => handlePayment('stripe')}

@@ -3,7 +3,7 @@ import 'font-awesome/css/font-awesome.min.css';
 import {Link} from 'react-router-dom';
 import Nav from './Nav';
 
-import Team from '../../../assets/images/team-2.jpg';
+import Team from '../../../assets/images/team-1.jpg';
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers , faFile , faGear } from '@fortawesome/free-solid-svg-icons'

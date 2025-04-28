@@ -89,7 +89,7 @@ function SignUpCompany() {
       });
       
       if (loginResponse.ok) {
-        navigate('/payment', { state: { plan: 'company' } });
+        navigate('/index-company', { state: { plan: 'company' } });
       }
       } else {
         if (!response.ok) {

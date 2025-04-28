@@ -56,27 +56,7 @@ function Sign_up() {
               </div>
             </div>
 
-            {/* Company Account */}
-            <div className="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
-              <div className="service-item rounded h-100 border shadow-sm">
-                <div className="d-flex justify-content-between p-3">
-                  <FontAwesomeIcon icon={faGear} className="text-primary fa-2x" />
-                  <Link className="service-btn" style={{ backgroundColor: 'transparent' }} to="/sign-up-company">
-                    <FontAwesomeIcon icon={faFile} className="text-primary fa-2x" />
-                  </Link>
-                </div>
-                <div className="p-4">
-                  <h5 className="mb-2">Company Account</h5>
-                  <h6 className="text-muted mb-3">$25/month</h6>
-                  <p>Designed for businesses with advanced needs. Includes:</p>
-                  <ul className="mb-0">
-                    <li>✔️ Team collaboration tools</li>
-                    <li>✔️ Project analytics</li>
-                    <li>✔️ Premium support</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
+           
 
             {/* Professional Account */}
             <div className="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.5s">
@@ -99,7 +79,28 @@ function Sign_up() {
                 </div>
               </div>
             </div>
-
+ {/* Company Account */}
+ <div className="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay="0.3s">
+              <div className="service-item rounded h-100 border shadow-sm">
+                <div className="d-flex justify-content-between p-3">
+                  <FontAwesomeIcon icon={faGear} className="text-primary fa-2x" />
+                  <Link className="service-btn" style={{ backgroundColor: 'transparent' }} to="/sign-up-company">
+                    <FontAwesomeIcon icon={faFile} className="text-primary fa-2x" />
+                  </Link>
+                </div>
+                <div className="p-4">
+                  <h5 className="mb-2">Company Account</h5>
+                  <h6 className="text-muted mb-3">You will get a <b>15 days Trial</b> before starting the $25/month</h6>
+                  
+                  <p>Designed for businesses with advanced needs. Includes:</p>
+                  <ul className="mb-0">
+                    <li>✔️ Team collaboration tools</li>
+                    <li>✔️ Project analytics</li>
+                    <li>✔️ Premium support</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

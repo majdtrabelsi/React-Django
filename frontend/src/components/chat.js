@@ -26,7 +26,7 @@ function ChatPage() {
       .catch(console.error);
   }, []);
 
-  // Auth status
+
   useEffect(() => {
     fetch('http://localhost:8000/api/accounts/accountstatus/', {
       credentials: 'include',
@@ -44,7 +44,6 @@ function ChatPage() {
       });
   }, [csrfToken]);
 
-  // Chat closed?
   useEffect(() => {
     fetch(`http://localhost:8000/api/accounts/chat-status/${id}/`, {
       credentials: 'include',
@@ -60,9 +59,17 @@ function ChatPage() {
       fetch(`http://localhost:8000/api/accounts/chat/${id}/`, {
         credentials: 'include',
       })
-        .then(res => res.json())
+        .then(res => {
+          if (res.status === 403) {
+            alert("🚫 You are not authorized to access this chat.");
+            window.location.href = "/"; // or use navigate('/') if using react-router
+            return null;
+          }
+          return res.json();
+        })
         .then(data => {
-          // Check if a new message was received from someone else
+          if (!data) return;
+  
           const newMessages = data.messages;
           const newCount = newMessages.length;
   
@@ -78,15 +85,14 @@ function ChatPage() {
           lastMessageCount = newCount;
           setMessages(newMessages);
           setIsOtherTyping(data.typing);
+  
           if (chatBoxRef.current) {
             const { scrollTop, scrollHeight, clientHeight } = chatBoxRef.current;
-            const isAtBottom = scrollTop + clientHeight >= scrollHeight - 50; // small margin
-          
+            const isAtBottom = scrollTop + clientHeight >= scrollHeight - 50;
             if (isAtBottom) {
               scrollToBottom();
             }
           }
-          
         })
         .catch(console.error);
     };
@@ -94,7 +100,7 @@ function ChatPage() {
     fetchMessages();
     const interval = setInterval(fetchMessages, 5000);
     return () => clearInterval(interval);
-  }, [id, isMuted, currentUserId]);
+  }, [id, isMuted, currentUserId]);  
   
   
 

@@ -8,11 +8,13 @@ import Team from '../../../assets/images/sony1.png';
 
 function Offers(){
     return(
+        <>
+        <Nav_pro/>
+
+        <br></br>
         <div className="container-xxl bg-white p-0">
-      
-      
             <div className="container-xxl position-relative p-0">
-                <Nav_pro/>
+                
                 <div className="container-xxl bg-pro page-header">
                     <div className="container text-center">
                         <h1 className="text-white animated zoomIn mb-3">Offers</h1>
@@ -65,7 +67,8 @@ function Offers(){
                     </div>
                 </div>
             </div>
-        </div>           
+        </div>        
+        </>   
      );
 }
 

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/main.css';
 import '../styles/bootstrap.min.css';
 import Nav from './Navbar.js';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 function Login() {
   const [isLoading, setIsLoading] = useState(true);
@@ -11,26 +11,19 @@ function Login() {
   const [error, setError] = useState('');
   const [csrfToken, setCsrfToken] = useState('');
   const navigate = useNavigate();
+  const location = useLocation();
 
-  // === Fetch CSRF token ===
+  // Fetch CSRF token
   useEffect(() => {
-    const fetchCsrfToken = async () => {
-      try {
-        const res = await fetch('http://localhost:8000/api/accounts/csrf/', {
-          credentials: 'include',
-        });
-        const data = await res.json();
-        setCsrfToken(data.csrfToken);
-      } catch (err) {
-        console.error('CSRF fetch error:', err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchCsrfToken();
+    fetch('http://localhost:8000/api/accounts/csrf/', {
+      credentials: 'include',
+    })
+      .then(res => res.json())
+      .then(data => setCsrfToken(data.csrfToken))
+      .catch(err => console.error('CSRF fetch error:', err));
   }, []);
 
-  // === Redirect helper ===
+  // Redirect helper
   const redirectToDashboard = (userType) => {
     switch (userType) {
       case 'company':
@@ -43,13 +36,13 @@ function Login() {
         navigate('/index-professional');
         break;
       default:
-        setError('User type is invalid!');
+        setError('Unknown user type.');
     }
   };
 
-  // === Check session from server ===
+  // If already logged in → redirect to dashboard
   useEffect(() => {
-    const checkSession = async () => {
+    const checkLoginStatus = async () => {
       try {
         const res = await fetch('http://localhost:8000/api/accounts/accountstatus/', {
           credentials: 'include',
@@ -61,28 +54,59 @@ function Login() {
           setIsLoading(false);
         }
       } catch (err) {
+        console.error('Session check error:', err);
         setIsLoading(false);
       }
     };
-    checkSession();
+    checkLoginStatus();
   }, []);
 
-  // === Check session from localStorage ===
+  // Handle auto-login from payment redirect
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    const userType = localStorage.getItem('userType');
+    const autoLogin = async () => {
+      const { email: emailFromState, password: passwordFromState } = location.state || {};
+      if (!emailFromState || !passwordFromState) {
+        setIsLoading(false);
+        return;
+      }
 
-    if (token && userType) {
-      redirectToDashboard(userType);
-    } else {
-      setIsLoading(false);
-    }
-  }, [navigate]);
+      try {
+        const res = await fetch('http://localhost:8000/api/accounts/login/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRFToken': csrfToken,
+          },
+          credentials: 'include',
+          body: JSON.stringify({
+            email: emailFromState,
+            password: passwordFromState,
+            is_auto_login: true
+          }),
+        });
 
-  // === Handle form submission ===
+        const result = await res.json();
+        console.log('✅ Auto-login result:', result);
+
+        if (res.ok) {
+          redirectToDashboard(result.type);
+        } else {
+          navigate('/payment', { state: { plan: 'company' } });
+        }
+      } catch (err) {
+        console.error('Auto-login error:', err);
+        setError('Auto-login failed.');
+        setIsLoading(false);
+      }
+    };
+
+    autoLogin();
+  }, [csrfToken, location.state]);
+
+  // Manual login
   const handleSubmit = async (event) => {
     event.preventDefault();
-    setError(''); // Clear any previous error
+    setError('');
 
     try {
       const res = await fetch('http://localhost:8000/api/accounts/login/', {
@@ -98,21 +122,47 @@ function Login() {
       const result = await res.json();
 
       if (res.ok) {
-        redirectToDashboard(result.type);
+        const { type, is_paid, trial_expired } = result;
+
+        if (type === 'company' && (!is_paid || trial_expired)) {
+          setError('⏳ Trial or subscription expired. Redirecting...');
+          setTimeout(() => {
+            navigate('/payment', {
+              state: {
+                plan: 'company',
+                email,
+                password,
+              },
+            });
+          }, 3000);
+        } else {
+          redirectToDashboard(type);
+        }
       } else {
-        setError(result.message || 'Invalid credentials');
+        if (result.message?.toLowerCase().includes('trial expired')) {
+          setError("⏳ Trial expired. Redirecting to payment...");
+          setTimeout(() => {
+            navigate('/payment', { state: { plan: 'company', email, password } });
+          }, 5000);
+        } else if (result.message?.toLowerCase().includes('subscription ended')) {
+          setError("💳 Subscription ended. Redirecting to payment...");
+          setTimeout(() => {
+            navigate('/payment', { state: { plan: 'company', email, password } });
+          }, 5000);
+        } else {
+          setError(result.message || 'Invalid credentials.');
+        }
       }
     } catch (err) {
       console.error('Login error:', err);
-      setError('Network error. Please try again.');
+      setError('Something went wrong. Try again.');
     }
   };
 
-  // === Render ===
   return (
     <div className="container-xxl bg-white p-0">
       <Nav />
-      
+
       {isLoading ? (
         <div
           id="spinner"
@@ -130,7 +180,7 @@ function Login() {
               <nav aria-label="breadcrumb">
                 <ol className="breadcrumb justify-content-center">
                   <li className="breadcrumb-item">
-                    <a className="text-white" href="../">Home</a>
+                    <a className="text-white" href="/">Home</a>
                   </li>
                   <li className="breadcrumb-item text-white active" aria-current="page">Login</li>
                 </ol>
@@ -140,13 +190,14 @@ function Login() {
 
           <div className="container-xxl py-6">
             <div className="container">
-              <div className="mx-auto text-center wow fadeInUp" data-wow-delay="0.1s" style={{ maxWidth: '600px' }}>
+              <div className="mx-auto text-center" style={{ maxWidth: '600px' }}>
                 <div className="d-inline-block border rounded-pill text-primary px-4 mb-3">Login</div>
                 <h2 className="mb-5">It's Simple And Quick.</h2>
               </div>
 
               <div className="row justify-content-center">
-                <div className="col-lg-7 wow fadeInUp" data-wow-delay="0.3s">
+                <div className="col-lg-7">
+                  {error && <div className="alert alert-danger mt-3">{error}</div>}
                   <form id="login" onSubmit={handleSubmit}>
                     <div className="row g-3 justify-content-md-center">
                       <div className="col-md-6">
@@ -197,8 +248,6 @@ function Login() {
                       </div>
                     </div>
                   </form>
-
-                  {error && <div className="alert alert-danger mt-3">{error}</div>}
                 </div>
               </div>
             </div>

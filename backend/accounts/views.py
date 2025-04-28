@@ -36,26 +36,48 @@ class CSRFTokenView(APIView):
         return JsonResponse({'csrfToken': get_token(request)})
 
 
+from datetime import timedelta
+from django.utils.timezone import now
+
 class LoginView(APIView):
     def post(self, request):
-        # If the user is already authenticated, return a message and prevent them from logging in again
         if request.user.is_authenticated:
             return Response({'message': 'Already logged in'}, status=status.HTTP_400_BAD_REQUEST)
 
         email = request.data.get('email')
         password = request.data.get('password')
-
         user = authenticate(request, username=email, password=password)
-        
+
         if user is not None:
-            login(request, user)
             user_type = user.type
+
+            # Determine if trial expired or subscription ended
+            trial_expired = False
+            subscription_ended = False
+
+            if user_type == 'company':
+                joined = user.date_joined
+                trial_end = joined + timedelta(days=15)
+
+                if not user.is_paid and now() > trial_end:
+                    trial_expired = True
+
+                if user.subscription_id and not user.is_paid:
+                    subscription_ended = True
+
+            # ✅ Allow login anyway
+            login(request, user)
+
             return Response({
                 'message': 'Login successful!',
-                'type': user_type
+                'type': user_type,
+                'is_paid': user.is_paid,
+                'trial_expired': trial_expired,
+                'subscription_ended': subscription_ended,
             }, status=status.HTTP_200_OK)
-        else:
-            return Response({'message': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+
+        return Response({'message': 'Invalid credentials'}, status=status.HTTP_400_BAD_REQUEST)
+
 
 class BaseUserRegistrationView(APIView):
     """ Base view for user registration """
@@ -438,6 +460,7 @@ def accountdatas(request):
         "last_login": user.last_login,
         "date_joined": user.date_joined,
         "account_type": user.type,
+        "is_paid": user.is_paid,
     }
     return Response(data)
 
@@ -573,7 +596,7 @@ def payment(request):
             }],
             mode='subscription',
             success_url=f"{settings.FRONTEND_URL}",
-            cancel_url=f"{settings.FRONTEND_URL}",
+            cancel_url=f"{settings.STRIPE_CANCEL_URL}",
             customer_email=user.email,
             metadata={
                 'user_id': str(user.id),
@@ -616,6 +639,9 @@ def payment_success(request):
         # ✅ Invoice public URL
         invoice_id = session.invoice or session.id
         invoice_url = None
+        if BillingHistory.objects.filter(stripe_invoice_id=stripe_invoice_id).exists():
+            return Response({'message': 'Payment already verified.'}, status=200)
+
 
         if invoice_id:
             invoice = stripe.Invoice.retrieve(invoice_id)
@@ -810,13 +836,21 @@ class RqofferViewSet(viewsets.ModelViewSet):
     filter_backends = (DjangoFilterBackend,)
     filterset_fields = ['id_offer']  # Allow filtering by 'user_name'
 from .models import ChatMessage
+from .utils import is_user_allowed_in_chat
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_messages(request, offer_id):
+    try:
+        chat = Rqoffer.objects.get(id=offer_id)
+    except Rqoffer.DoesNotExist:
+        return Response({'error': 'Chat not found'}, status=404)
+
+    if not is_user_allowed_in_chat(request.user, chat):
+        return Response({'error': 'Unauthorized'}, status=403)
+
     messages = ChatMessage.objects.filter(offer_id=offer_id).order_by('timestamp')
     status = ChatStatus.objects.filter(offer_id=offer_id).first()
 
-    # Mark all unread messages to this user as read
     unread = messages.filter(is_read=False).exclude(sender=request.user)
     unread.update(is_read=True)
 
@@ -841,16 +875,18 @@ def get_messages(request, offer_id):
         'typing': status.typing_user != request.user if status else False
     })
 
-
+from .models import Rqoffer
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def send_message(request, offer_id):
-    from .models import Rqoffer  # add this at the top if it's not already imported
-
     try:
         chat = Rqoffer.objects.get(id=offer_id)
     except Rqoffer.DoesNotExist:
         return Response({'error': 'Chat not found'}, status=404)
+
+    # ✅ Only check permissions *after* chat is guaranteed to exist
+    if not is_user_allowed_in_chat(request.user, chat):
+        return Response({'error': 'You are not authorized to view this chat.'}, status=403)
 
     if chat.chat_closed:
         return Response({'error': 'Chat is closed'}, status=403)
@@ -860,7 +896,7 @@ def send_message(request, offer_id):
         return Response({'error': 'Empty message'}, status=400)
 
     message = ChatMessage.objects.create(
-        offer_id=offer_id,
+        offer=chat,
         sender=request.user,
         text=text,
     )
@@ -871,11 +907,14 @@ def send_message(request, offer_id):
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def chat_status(request, offer_id):
+    
     try:
         chat = Rqoffer.objects.get(id=offer_id)
         return Response({'chat_closed': chat.chat_closed})
     except Rqoffer.DoesNotExist:
         return Response({'error': 'Chat not found'}, status=404)
+    if not is_user_allowed_in_chat(request.user, chat):
+        return Response({'error': 'Unauthorized'}, status=403)
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
@@ -891,17 +930,26 @@ def close_chat(request, offer_id):
     except Rqoffer.DoesNotExist:
         return Response({'error': 'Chat not found'}, status=404)
 
+    if not is_user_allowed_in_chat(request.user, chat):
+        return Response({'error': 'Unauthorized'}, status=403)
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def update_typing(request, offer_id):
     try:
-        status, _ = ChatStatus.objects.get_or_create(offer_id=offer_id)
-        status.typing_user = request.user
-        status.save()
-        return Response({'status': 'updated'})
-    except Exception as e:
-        return Response({'error': str(e)}, status=400)
+        chat = Rqoffer.objects.get(id=offer_id)
+    except Rqoffer.DoesNotExist:
+        return Response({'error': 'Chat not found'}, status=404)
+
+    if not is_user_allowed_in_chat(request.user, chat):
+        return Response({'error': 'Not authorized'}, status=403)
+
+    status, _ = ChatStatus.objects.get_or_create(offer=chat)
+    status.typing_user = request.user
+    status.save()
+    return Response({'status': 'updated'})
+
 # community/views.py
 # community/views.py
 # community/views.py

@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-27ovb9*dyt6ug5+v945=1aa=&i&#fyr#$fb=b1pri(#xjx^@uz
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -104,9 +104,10 @@ SESSION_COOKIE_HTTPONLY = True  # Helps prevent JavaScript access to session coo
 CSRF_COOKIE_HTTPONLY = False
 CSRF_COOKIE_NAME = "csrftoken"
 CSRF_COOKIE_SAMESITE = 'Lax'
-SESSION_COOKIE_SAMESITE = 'Lax'
+SESSION_COOKIE_SAMESITE = None
+#SESSION_COOKIE_SAMESITE = 'Lax' before and now for mobile is none
 WSGI_APPLICATION = 'backend.wsgi.application'
-CSRF_TRUSTED_ORIGINS = ['http://localhost:8000','http://localhost:3000']
+CSRF_TRUSTED_ORIGINS = ['http://localhost:8000','http://localhost:3000','http://172.20.10.2:8000']
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",  # Your frontend
 ]
@@ -169,7 +170,7 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 STRIPE_SECRET_KEY = 'sk_test_51RC88KFJihK8kOFpx18p1nRxlnbCgtFrESjDxMYV3yZiutTr7FT7JwHcqGuVeE5MWJMFKJQoBDfTh9xt2CUJKmjZ00yEg7CIza'
 FRONTEND_URL = 'http://localhost:3000/payment/success/?session_id={CHECKOUT_SESSION_ID}'
 
-STRIPE_CANCEL_URL = 'http://localhost:3000/payment/cancel/'
+STRIPE_CANCEL_URL = 'http://localhost:3000/payment/'
 
 
 STRIPE_COMPANY_PRICE_ID = 'price_1RC9BoFJihK8kOFpYV3Vbjb5'

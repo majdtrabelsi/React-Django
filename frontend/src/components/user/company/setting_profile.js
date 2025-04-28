@@ -7,7 +7,7 @@ import { faUsers, faFile, faFloppyDisk, faLeftLong } from '@fortawesome/free-sol
 import React, { useState, useEffect } from "react";
 
 function Settings() {
-  const [profileData, setProfileData] = useState({ name: "", photo: heroImage });  // Create profileData state
+  const [profileData, setProfileData] = useState({ name: "", photo: heroImage });
   const [imageFile, setImageFile] = useState(null);
   const [csrfToken, setCsrfToken] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);

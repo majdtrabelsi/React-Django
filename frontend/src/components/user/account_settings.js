@@ -97,14 +97,15 @@ function SettingAccountPage() {
 }
 
 
-// === DASHBOARD ===
 const Dashboard = () => {
   const [accountData, setAccountData] = useState(null);
   const [error, setError] = useState('');
   const [cardInfo, setCardInfo] = useState(null);
   const [subscriptionInfo, setSubscriptionInfo] = useState(null);
   const [loading, setLoading] = useState(true);
-  
+  const navigate = useNavigate();
+
+  // === Fetch card info ===
   useEffect(() => {
     fetch('http://localhost:8000/api/accounts/billing/status/', {
       credentials: 'include',
@@ -114,6 +115,7 @@ const Dashboard = () => {
       .catch(() => setCardInfo(null));
   }, []);
 
+  // === Fetch subscription info ===
   useEffect(() => {
     fetch('http://localhost:8000/api/accounts/subscription/status/', {
       credentials: 'include',
@@ -123,6 +125,7 @@ const Dashboard = () => {
       .catch(() => setSubscriptionInfo(null));
   }, []);
 
+  // === Fetch account data ===
   useEffect(() => {
     fetch('http://localhost:8000/api/accounts/accountdatas/', {
       credentials: 'include',
@@ -142,18 +145,29 @@ const Dashboard = () => {
       });
   }, []);
 
-  if (loading) {
-    return <div className="text-center my-5">Loading dashboard...</div>;
-  }
 
-  if (error) {
-    return <div className="alert alert-danger text-center">{error}</div>;
-  }
+  useEffect(() => {
+    if (accountData) {
+      const { account_type, is_paid, date_joined } = accountData;
+      const joinedDate = new Date(date_joined);
+      const now = new Date();
+      const ageInDays = Math.floor((now - joinedDate) / (1000 * 60 * 60 * 24));
+      const isCompany = account_type === 'company';
+      const trialExpired = isCompany && !is_paid && ageInDays > 15;
 
-  if (!accountData) {
-    return <div className="text-center my-5">No account data available.</div>;
-  }
 
+      if (trialExpired) {
+        const timeout = setTimeout(() => {
+          navigate('/payment');
+        }, 5000);
+        return () => clearTimeout(timeout);
+      }
+    }
+  }, [accountData, navigate]);
+
+  if (loading) return <div className="text-center my-5">Loading dashboard...</div>;
+  if (error) return <div className="alert alert-danger text-center">{error}</div>;
+  if (!accountData) return <div className="text-center my-5">No account data available.</div>;
 
   const {
     username,
@@ -163,48 +177,73 @@ const Dashboard = () => {
     subscription_due,
     first_name,
     last_name,
+    is_paid,
   } = accountData;
 
   const joinedDate = new Date(date_joined);
-  const accountAgeInYears = (new Date() - joinedDate) / (1000 * 60 * 60 * 24 * 365);
-  const isOlder = accountAgeInYears > 1;
+  const now = new Date();
+  const accountAgeInDays = Math.floor((now - joinedDate) / (1000 * 60 * 60 * 24));
+  const isCompany = account_type === 'company';
+  const trialExpired = isCompany && !is_paid && accountAgeInDays > 15;
+  const trialStartDate = joinedDate.toLocaleDateString();
+  const trialEndDate = new Date(joinedDate.getTime() + 15 * 24 * 60 * 60 * 1000).toLocaleDateString();
+
+  if (trialExpired) {
+    return (
+      <div className="alert alert-danger text-center my-5">
+        ⛔ Your 15-day free trial has expired.<br />
+        Please subscribe to continue using your account.<br />
+        <small>Redirecting to payment page...</small>
+      </div>
+    );
+  }
 
   const isPremium = ['professional', 'company'].includes(account_type);
-  const accountAgeInDays = Math.floor((new Date() - joinedDate) / (1000 * 60 * 60 * 24));
-  let loyaltyMessage = null;
-  if (accountAgeInDays >= 365) {
-    loyaltyMessage = "🎉 You've been with us for over a year — we appreciate your loyalty!";
-  } else if (accountAgeInDays >= 180) {
-    loyaltyMessage = "🥳 6 months already? You're amazing!";
-  } else if (accountAgeInDays >= 90) {
-    loyaltyMessage = "🔥 3 months strong! Thanks for sticking around!";
-  } else if (accountAgeInDays >= 30) {
-    loyaltyMessage = "🎈 1 month milestone — thanks for being here!";
-  }
+  const loyaltyMessage = accountAgeInDays >= 365
+    ? "🎉 You've been with us for over a year — we appreciate your loyalty!"
+    : accountAgeInDays >= 180
+      ? "🥳 6 months already? You're amazing!"
+      : accountAgeInDays >= 90
+        ? "🔥 3 months strong! Thanks for sticking around!"
+        : accountAgeInDays >= 30
+          ? "🎈 1 month milestone — thanks for being here!"
+          : null;
 
   return (
     <div className="row justify-content-center">
       <div className="col-md-6">
         <div className="card mb-3 shadow-sm">
           <div className="card-body text-center">
-            <h4 className="card-title mb-3">👤 Welcome, {first_name +' '+ last_name}</h4>
+            <h4 className="card-title mb-3">👤 Welcome, {first_name + ' ' + last_name}</h4>
             <p><strong>Registration Email :</strong> {username}</p>
             <p><strong>Last Visit:</strong> {new Date(last_login).toLocaleDateString()}</p>
-            <p><strong>Account Type:</strong> {account_type.charAt(0).toUpperCase() + account_type.slice(1)}</p>
+            <p><strong>Account Type:</strong> {account_type}</p>
             <p><strong>Joined:</strong> {joinedDate.toLocaleDateString()}</p>
-            {loyaltyMessage && (
-                <div className="alert alert-success mt-3">
-                    {loyaltyMessage}
+            {isCompany && !is_paid && (
+                <div className="alert alert-info mt-3">
+                    🧪 <strong>Trial Period</strong><br />
+                    Started on : {trialStartDate} <br />
+                    Ends on : {trialEndDate} <br />
+                    {trialExpired ? (
+                    <span style={{ color: 'red' }}>Your trial has expired.</span>
+                    ) : (
+                    <span>Days left : {15 - accountAgeInDays}</span>
+                    )}
                 </div>
+                )}
+
+
+            {loyaltyMessage && (
+              <div className="alert alert-success mt-3">
+                {loyaltyMessage}
+              </div>
             )}
 
-            {subscriptionInfo && !subscriptionInfo.plan=='Free' && (
+            {subscriptionInfo && subscriptionInfo.plan !== 'Free' ? (
               <p><strong>Subscription ends on:</strong> {new Date(subscriptionInfo.renewal_date).toLocaleDateString()}</p>
+            ) : (
+              <p><strong>Subscription:</strong> <span style={{ color: `red` }}>No Active Subscription</span></p>
             )}
-            {subscriptionInfo && subscriptionInfo.plan=='Free' && (
-              <p><strong>Subscription ends on :</strong><span style={{ color: `red` }}> No Active Subscription</span> </p>
-            )}
-
 
             {isPremium && subscription_due && (
               <div className="alert alert-warning mt-3">
@@ -217,18 +256,16 @@ const Dashboard = () => {
                 💳 No credit card on file. <br />Add one in the Billing tab for automatic subscription renewals.
               </div>
             )}
-
-            {isOlder && (
-              <div className="alert alert-success mt-3">
-                � You've been with us for over a year!
-              </div>
-            )}
           </div>
         </div>
       </div>
     </div>
   );
-};  
+};
+
+
+
+
 function CreditCardForm({ onSubmit }) {
   const [formData, setFormData] = useState({
     cardNumber: '',

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Nav_pro from './Nav';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import axios from 'axios';
 
 import { faFacebook, faLinkedin } from '@fortawesome/free-brands-svg-icons';
 import { faTwitter } from '@fortawesome/free-brands-svg-icons';
@@ -9,14 +10,27 @@ import Team from '../../../assets/images/sony1.png';
 
 
 function List_company(){
+
+    const [users, setUsers] = useState([]);
+
+    useEffect(() => {
+        // Make an API call to the Django backend to fetch users
+        axios.get('http://127.0.0.1:8000/api/accounts/api/company/')
+            .then(response => {
+                setUsers(response.data);
+            })
+            .catch(error => {
+                console.error('There was an error fetching the user data!', error);
+            });
+    }, []);
+
     return(
         <div className="container-xxl bg-white p-0">
       
       
             <div className="container-xxl position-relative p-0">
-                <Nav_pro/>
-                {/* Navbar (Replace with your navbar component) */}
-                <div className="container-xxl bg-pro page-header">
+                <Nav_pro />
+                <div className="container-xxl bg-primary page-header">
                 <div className="container text-center">
                     <h1 className="text-white animated zoomIn mb-3">List_Company</h1>
                     <nav aria-label="breadcrumb">
@@ -56,10 +70,12 @@ function List_company(){
                     </select>
                     </div>
 
-                    <div className="row g-4 ">
-                        <div  className="col-lg-3 col-md-6 wow fadeInUp " data-wow-delay="0.1s">
-                            <div className="team-item  ">
-                                <h5>Sony</h5>
+                    <div className="row g-4">
+                        {users.map(user => (
+
+                        <div  className="col-lg-3 col-md-6 wow fadeInUp" data-wow-delay="0.1s">
+                            <div key={`${user.company_name}`} className="team-item">
+                                <h5>{user.firstname}</h5>
                                 <p className="mb-4">Tech Company</p>
                                 <img  className="img-fluid rounded-circle w-100 mb-4" src={Team}  />
                                 <div className="d-flex justify-content-center">
@@ -75,7 +91,7 @@ function List_company(){
                                     </a>
                                 </div>
                             </div>
-                        </div>
+                        </div>))}
                     
                     </div>
                 </div>

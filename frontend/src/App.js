@@ -4,7 +4,7 @@ import Sign_up  from './components/sign_up';
 import Sign_up_person  from './components/sign_up_person';
 import Sign_up_company  from './components/sign_up_company';
 import Sign_up_professional from './components/sign_up_professional.js'
-import Professional_dashboard from  './components/user/professional/home';
+import Professional_dashboard from  './components/user/pro/index.js';
 import Login  from './components/login.js';
 import Social from './components/user/person/social.js';
 import Index_person  from './components/user/person/index';
@@ -36,6 +36,15 @@ import Reply  from './components/user/person/Reply.js';
 
 
 
+import Profile_pro from './components/user/pro/profile.js';
+import Settings_Pro from './components/user/pro/Setting.js';
+import Social_Pro from './components/user/pro/Social.js';
+import Portfolio_Pro from './components/user/pro/portfolio.js';
+import List_company from './components/user/pro/list_company.js';
+import Cv_Pro from './components/user/pro/Cv.js';
+import Setting_cv_pro from './components/user/pro/Setting_cv.js';
+import List_pro from './components/user/pro/List_person.js';
+import Settings_Professional from './components/user/pro/pro_settings.js';
 
 
 
@@ -99,6 +108,20 @@ function App() {
 
 
 
+        <Route path="/Profile-pro" element={<Profile_pro/>} />
+        <Route path="/Settings_Pro" element={<Settings_Pro/>} />
+        <Route path="/Social-Pro" element={<Social_Pro/>} />
+        <Route path="/Portfolio-Pro" element={<Portfolio_Pro/>} />
+        <Route path="/List-company-pro" element={<List_company/>} />
+        <Route path="/Cv" element={<Cv_Pro/>} />
+        <Route path="/Setting-cv-pro" element={<Setting_cv_pro/>} />
+        <Route path="/List-pro" element={<List_pro/>} />
+        <Route path="/Pro-Settings" element={<Settings_Professional/>} />
+        
+        
+        
+        
+        
 
       </Routes>
     </Router>
@@ -108,5 +131,3 @@ function App() {
 }
 
 export default App;
-
-

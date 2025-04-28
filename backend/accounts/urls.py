@@ -74,5 +74,6 @@ urlpatterns = [
     path('chat/<int:offer_id>/send/', views.send_message),
     path('chat/<int:offer_id>/close/', views.close_chat),
     path('chat-status/<int:offer_id>/', views.chat_status),
+    path('chat/<int:offer_id>/typing/',views.update_typing)
 
 ]
