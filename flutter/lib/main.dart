@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
 import './screens/splash_screen.dart';
+import './screens/SessionCheckerScreen.dart';
+import 'package:pfe_app/utils/dio_client.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await DioClient.initialize();
+  // runApp(const MyApp());
+  
+  runApp(const MaterialApp(
+
+    debugShowCheckedModeBanner: false,
+    home: SessionCheckerScreen()
+  
+  ));
+
 }
 
 class MyApp extends StatelessWidget {

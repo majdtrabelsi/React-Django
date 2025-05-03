@@ -21,7 +21,7 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final Dio dio = Dio(BaseOptions(
-    baseUrl: 'http://your-server-ip:8000', // Change IP
+    baseUrl: 'http://172.20.10.2:8000', // Change IP
     connectTimeout: const Duration(seconds: 10),
     receiveTimeout: const Duration(seconds: 10),
     headers: {'Content-Type': 'application/json'},

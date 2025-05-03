@@ -11,7 +11,7 @@ function Contact() {
     message: ''
   });
   const [responseMessage, setResponseMessage] = useState('');
-  const [messageType, setMessageType] = useState(''); // Tracks if the message is success or error
+  const [messageType, setMessageType] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleChange = (e) => {

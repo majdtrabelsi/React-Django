@@ -3,6 +3,10 @@ import 'dart:convert';
 import 'dart:async';
 import 'package:http/http.dart' as http;
 
+import 'package:dio/dio.dart';
+import '../utils/dio_client.dart';
+import '../screens/login_screen.dart';
+import 'package:flutter/material.dart';
 class AuthService {
   static const String baseUrl = "http://172.20.10.2:8000/";
 
@@ -115,5 +119,39 @@ class AuthService {
     } catch (e) {
       throw Exception(e.toString().replaceFirst('Exception: ', ''));
     }
+  }
+}
+
+
+
+Future<void> logoutUser(BuildContext context) async {
+  try {
+    final dio = DioClient.dio;
+
+    // 1. Fetch CSRF
+    final csrfRes = await dio.get('/api/accounts/csrf/');
+    final csrfToken = csrfRes.data['csrfToken'];
+
+    // 2. Logout request
+    final res = await dio.post(
+      '/api/accounts/logout/',
+      options: Options(headers: {
+        'X-CSRFToken': csrfToken,
+      }),
+    );
+
+    if (res.statusCode == 200) {
+      // 3. Redirect to login
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        (route) => false,
+      );
+    }
+  } catch (e) {
+    // Optional: Show error or fallback
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Logout failed.')),
+    );
   }
 }
