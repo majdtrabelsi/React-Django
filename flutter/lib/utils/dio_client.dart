@@ -16,7 +16,7 @@ class DioClient {
     );
 
     dio = Dio(BaseOptions(
-      baseUrl: 'http://172.20.10.2:8000', // ⚡ Change IP if needed
+      baseUrl: 'http://172.20.10.4:8000', // ⚡ Change IP if needed
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
       headers: {

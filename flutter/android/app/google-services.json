@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "547540944171",
+    "project_id": "pfe-app-b6266",
+    "storage_bucket": "pfe-app-b6266.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:547540944171:android:0b887e7b22e685f9c4316e",
+        "android_client_info": {
+          "package_name": "com.example.pfe_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA9faSeS3HRIbuSr_omGiYqgtjOYPhcL3Y"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

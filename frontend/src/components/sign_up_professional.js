@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import '../styles/main.css';
 import '../styles/bootstrap.min.css';
 import Nav from './Navbar.js';
-import { useNavigate } from 'react-router-dom'; // Import the useNavigate hook
+import { useNavigate } from 'react-router-dom';
+import { checkPasswordStrength } from './passwordUtils';
 
 function Register() {
   const [isLoading, setIsLoading] = useState(true);
@@ -11,27 +12,29 @@ function Register() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [firstname, setFirstName] = useState('');
   const [lastname, setLastName] = useState('');
-  const [type, setType] = useState('professional'); // Default to "professional"
+  const [type, setType] = useState('professional');
   const [error, setError] = useState('');
-  const navigate = useNavigate(); // useNavigate hook for redirection
+  const navigate = useNavigate(); 
+  const [passwordStrength, setPasswordStrength] = useState({ isStrong: false, rules: {} });
+
   
-  // Stop the loading spinner after 1 second
+  // Stop the loading spinner after 5 m-second
   useEffect(() => {
     setTimeout(() => {
       setIsLoading(false);
-    }, 1000); 
+    }, 500); 
   }, []);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-
+    
     const data = {
       email: email,
       password: password,
-      confirm_password: confirmPassword,  // Add confirm_password
+      confirm_password: confirmPassword,
       firstname: firstname,
       lastname: lastname,
-      type: "professional",  // or whichever type you want to register
+      type: "professional",
     };
     async function getCSRFToken() {
       const response = await fetch('http://localhost:8000/api/accounts/csrf/', {
@@ -40,7 +43,12 @@ function Register() {
     
       const data = await response.json();
       return data.csrfToken;
-    }    
+    }
+    if (!passwordStrength.isStrong) {
+      setError("Password is too weak.");
+      return;
+    }
+    
     try {
       const csrfToken = await getCSRFToken();
 
@@ -75,7 +83,8 @@ function Register() {
         
         if (loginResponse.ok) {
           // ✅ Logged in successfully
-          navigate('/payment', { state: { plan: 'professional' } });
+          //navigate('/payment', { state: { plan: 'professional' } });
+          navigate('/select-domain');
         }
       } else {
         console.log('Error:', responseData);
@@ -184,17 +193,27 @@ function Register() {
                     <div className="row g-3 mt-2 justify-content-md-center">
                       <div className="col-md-6">
                         <div className="form-floating">
-                          <input
-                            name="password"
-                            type="password"
-                            className="form-control"
-                            id="password"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                          />
+                        <input 
+                          type="password" 
+                          className="form-control" 
+                          id="password" 
+                          placeholder="Password"
+                          value={password}
+                          onChange={(e) => {
+                            const value = e.target.value;
+                            setPassword(value);
+                            setPasswordStrength(checkPasswordStrength(value));
+                          }}
+                        />
                           <label htmlFor="password">Password</label>
                         </div>
+                        <ul className="text-muted small mt-2">
+                          <li style={{ color: passwordStrength.rules.minLength ? 'green' : 'red' }}>• At least 8 characters</li>
+                          <li style={{ color: passwordStrength.rules.hasUpper ? 'green' : 'red' }}>• Uppercase letter</li>
+                          <li style={{ color: passwordStrength.rules.hasLower ? 'green' : 'red' }}>• Lowercase letter</li>
+                          <li style={{ color: passwordStrength.rules.hasNumber ? 'green' : 'red' }}>• Number</li>
+                          <li style={{ color: passwordStrength.rules.hasSymbol ? 'green' : 'red' }}>• Symbol (!@#$...)</li>
+                        </ul>
                       </div>
 
                       <div className="col-md-6">

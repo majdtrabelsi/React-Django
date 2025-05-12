@@ -54,7 +54,7 @@ function Navbar() {
   };
   return (
     <nav className="navbar navbar-expand-lg navbar-light px-4 px-lg-5 py-3 py-lg-0">
-      <a href="index.php" className="navbar-brand p-0">
+      <a href="/" className="navbar-brand p-0">
         <h1 style={{color:'red'}} className="m-0">BizConsult</h1>
         {/* <img src="assets/images/logo.png" alt="Logo" /> */}
       </a>

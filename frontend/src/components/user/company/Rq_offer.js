@@ -1,5 +1,5 @@
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import Nav_company from './Nav';
+import Nav_company from './Nav.js';
 import { faCheck, faX, faPlus } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
 import React, { useState, useEffect } from 'react';
@@ -96,7 +96,11 @@ function Rqoffer() {
                         offers.map((offer, index) => (
                         <tr key={offer.id}>
                             <th scope="row">{index + 1}</th>
-                            <td>{offer.name_person}</td>
+                            <td>
+                            <a href={`http://localhost:3000/user-profile/${offer.name_person}`} target="_blank" rel="noopener noreferrer">
+                                {offer.name_person}
+                            </a>
+                            </td>
                             <td>
                                 {offer.rp_offer !== 'accept' && offer.rp_offer !== 'refuse' && (
                                     <>

@@ -1,33 +1,43 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import Nav_person from './nav';
 
 function Offers() {
   const [offers, setOffers] = useState([]);
+  const [company_name, setCompanyName] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userName, setUserName] = useState('');
   const [message, setMessage] = useState('');
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetch('http://localhost:8000/api/accounts/accountstatus/', { credentials: 'include' })
-      .then(response => response.json())
-      .then(data => {
-        if (data.isAuthenticated) {
-          setIsAuthenticated(true);
-          setUserName(data.user);
-        } else {
-          setIsAuthenticated(false);
-        }
+      .then((response) => response.json())
+      .then((data) => {
+        setIsAuthenticated(!!data.isAuthenticated);
       })
-      .catch(error => {
-        console.error('Error fetching user status:', error);
-      });
+      .catch((error) => console.error('Error fetching user status:', error));
   }, []);
 
   useEffect(() => {
-    axios.get('http://127.0.0.1:8000/api/accounts/api/offers/')
-      .then(response => setOffers(response.data))
-      .catch(error => console.error('Error fetching offers:', error));
+    fetch('http://localhost:8000/api/accounts/accountdatas/', { credentials: 'include' })
+      .then((response) => response.json())
+      .then((data) => setUserName(data.first_name))
+      .catch((error) => console.error('Error fetching user data:', error));
+  }, []);
+  useEffect(() => {
+    fetch('http://localhost:8000/api/accounts/api/company/', { credentials: 'include' })
+      .then((response) => response.json())
+      .then((data) => setCompanyName(data.company_name))
+      .catch((error) => console.error('Error fetching user data:', error));
+  }, []);
+
+  useEffect(() => {
+    axios
+      .get('http://127.0.0.1:8000/api/accounts/api/offers/')
+      .then((response) => setOffers(response.data))
+      .catch((error) => console.error('Error fetching offers:', error));
   }, []);
 
   const handleAddPerson = (offerId, companyName) => {
@@ -38,15 +48,17 @@ function Offers() {
       rp_offer: '',
     };
 
-    axios.post('http://127.0.0.1:8000/api/accounts/api/rqoffers/', data, { withCredentials: true })
-      .then(response => {
+    axios
+      .post('http://127.0.0.1:8000/api/accounts/api/rqoffers/', data, { withCredentials: true })
+      .then(() => {
         setMessage('✅ Offer submitted successfully!');
       })
-      .catch(error => {
+      .catch((error) => {
         if (error.response?.status === 400 && error.response.data?.detail?.includes('unique')) {
-          setMessage('⚠️ You have already submitted an offer for this.');
-        } else {
           setMessage('⚠️ Something went wrong while submitting the offer.');
+          
+        } else {
+          setMessage('⚠️ You have already submitted an offer for this.');
         }
       });
   };
@@ -60,62 +72,75 @@ function Offers() {
 
   return (
     <div className="container-xxl bg-white p-0">
-      <div className="container-xxl position-relative p-0">
-        <Nav_person />
-        <div className="container-xxl bg-primary page-header">
-          <div className="container text-center">
-            <h1 className="text-white animated zoomIn mb-3">Offers</h1>
-            <nav aria-label="breadcrumb">
-              <ol className="breadcrumb justify-content-center">
-                <li className="breadcrumb-item">
-                  <a className="text-white" href="#">Home</a>
-                </li>
-                <li className="breadcrumb-item">
-                  <a className="text-white" href="#">Pages</a>
-                </li>
-                <li className="breadcrumb-item text-white active" aria-current="page">
-                  Offers
-                </li>
-              </ol>
-            </nav>
-          </div>
-        </div>
+      <Nav_person />
+
+      {/* Page Header */}
+      <div className="container-xxl bg-primary py-5 text-center text-white">
+        <h1 className="mb-3">Offers</h1>
+        <p className="mb-0">Browse the latest projects and tasks available for freelancers</p>
       </div>
 
-      <div className="container-xxl py-6">
-        <div className="container">
-          {message && (
-            <div className="alert alert-info text-center fw-bold" role="alert">
-              {message}
-            </div>
-          )}
+      {/* Feedback Message */}
+      {message && (
+        <div className="container py-3">
+          <div className="alert alert-info text-center fw-bold mb-0" role="alert">
+            {message}
+          </div>
+        </div>
+      )}
 
-          <div className="row g-4">
-            {offers.map((offer, index) => (
-              <div key={offer.id} className="col-lg-4 col-md-6 wow fadeInUp" data-wow-delay={`${index * 0.1}s`}>
-                <div className="service-item rounded shadow h-100 p-4 bg-light d-flex flex-column justify-content-between">
-                  <div className="d-flex align-items-center justify-content-between mb-3">
-                    <div className="service-icon rounded-circle bg-primary d-flex align-items-center justify-content-center" style={{ width: 60, height: 60 }}>
-                      <i className="fa fa-briefcase text-white fs-4"></i>
+      {/* Offers Grid */}
+      <div className="container py-5">
+        <div className="row g-4">
+          {offers.map((offer, index) => (
+            <div key={offer.id} className="col-lg-4 col-md-6">
+              <div className="card shadow h-100 border-0">
+                <div className="card-body d-flex flex-column">
+                  <div className="d-flex justify-content-between align-items-center mb-3">
+                    <div className="rounded-circle bg-primary d-flex align-items-center justify-content-center" style={{ width: 50, height: 50 }}>
+                      <i className="fa fa-briefcase text-white fs-5"></i>
                     </div>
-                    <h5 className="mb-0 text-primary">{offer.user_name}</h5>
+                    <h6 className="text-primary mb-0">{offer.name_company}</h6>
                     <button
                       className="btn btn-outline-primary rounded-circle"
-                      style={{ width: 40, height: 40 }}
+                      style={{ width: 38, height: 38 }}
                       onClick={() => handleAddPerson(offer.id, offer.user_name)}
                       title="Submit Offer"
                     >
                       <i className="fa fa-paper-plane"></i>
                     </button>
                   </div>
-                  <div className="p-2 mt-2">
-                    <p className="mb-0">{offer.description}</p>
+
+                  {/* Offer Title */}
+                  <h5 className="mb-2 text-dark">{offer.title}</h5>
+
+                  <p className="text-muted flex-grow-1">
+                    {offer.description.split(' ').slice(0, 20).join(' ')}
+                    {offer.description.split(' ').length > 20 && '...'}
+                  </p>
+                  {/* Price and Hours */}
+                  <div className="mb-3">
+                    <p className="mb-1"><strong>💰 Price:</strong> ${offer.price || 'N/A'}</p>
+                    <p className="mb-0"><strong>🕒 Hours:</strong> {offer.hours || 'N/A'} hrs</p>
                   </div>
+
+                  {/* Details Button */}
+                  <button
+                    className="btn btn-sm btn-primary mt-auto w-100"
+                    onClick={() => navigate(`/offer-detailed/${offer.id}`)}
+                  >
+                    View Details
+                  </button>
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          ))}
 
+          {offers.length === 0 && (
+            <div className="col-12 text-center text-muted">
+              <p>No offers available right now.</p>
+            </div>
+          )}
         </div>
       </div>
     </div>

@@ -33,8 +33,8 @@ import Chat  from './components/chat.js';
 import Community  from './components/user/person/Community.js';
 import Community_company  from './components/user/company/community.js';
 import Reply  from './components/user/person/Reply.js';
-
-
+import PrivacyPolicy from './components/PrivacyPolicy.js';
+import TermsAndConditions from './components/TermsAndConditions.js';
 
 import Profile_pro from './components/user/pro/profile.js';
 import Settings_Pro from './components/user/pro/Setting.js';
@@ -45,10 +45,12 @@ import Cv_Pro from './components/user/pro/Cv.js';
 import Setting_cv_pro from './components/user/pro/Setting_cv.js';
 import List_pro from './components/user/pro/List_person.js';
 import Settings_Professional from './components/user/pro/pro_settings.js';
+import UserProfileTabs  from './components/user/company/user_profile.js';
+import DomainSpecialtySelect from './components/user/chose_domain.js';
+import OfferDetailed from './components/user/person/OfferDetailed.js';
 
-
-
-
+import Social_Comp from './components/user/company/social.js';
+import CookiesPolicy from './components/CookiesPolicy.js';
 
 
 
@@ -58,6 +60,14 @@ import Settings_Professional from './components/user/pro/pro_settings.js';
 import './styles/main.css';
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ForgotPassword from './components/ForgotPassword';
+import ResetPassword from './components/ResetPassword';
+
+
+import ChoseDomain from './components/user/company/chose_domain_comp.js';
+
+
+
 
 
 function App() {
@@ -117,11 +127,16 @@ function App() {
         <Route path="/Setting-cv-pro" element={<Setting_cv_pro/>} />
         <Route path="/List-pro" element={<List_pro/>} />
         <Route path="/Pro-Settings" element={<Settings_Professional/>} />
-        
-        
-        
-        
-        
+        <Route path="/user-profile/:username" element={<UserProfileTabs />} />
+        <Route path="/select-domain" element={<DomainSpecialtySelect />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:uid/:token" element={<ResetPassword />} />
+        <Route path="/offer-detailed/:id" element={<OfferDetailed />} />
+        <Route path="/social-company" element={<Social_Comp />} />
+        <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+        <Route path="/terms" element={<TermsAndConditions />} />
+        <Route path="/cookies" element={<CookiesPolicy />} />
+        <Route path="/chose-domain-comp" element={<ChoseDomain />} />
 
       </Routes>
     </Router>

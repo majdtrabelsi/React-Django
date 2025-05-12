@@ -1,7 +1,7 @@
 import 'font-awesome/css/font-awesome.min.css';
 import { Link, useNavigate } from 'react-router-dom';
 import Nav_person from './Nav';
-import heroImage from '../../../assets/images/team-2.jpg';
+import heroImage from '../../../assets/images/no-photo.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers, faFile, faFloppyDisk, faLeftLong } from '@fortawesome/free-solid-svg-icons';
 import React, { useState, useEffect } from "react";
@@ -80,6 +80,9 @@ function Settings() {
         navigate('/Profile-company');
         throw new Error("Failed to save profile data");
       }
+      else{
+        navigate('/Profile-company');
+      }
   
       const data = await response.json();
       console.log("Profile saved successfully:", data);
@@ -150,18 +153,7 @@ function Settings() {
             </nav>
           </div>
 
-          <div style={{ paddingLeft: '70em' }} className="row g-4">
-            <div className="col">
-              <Link to="/Social-person" className="btn btn-outline btn-social">
-                <FontAwesomeIcon icon={faUsers} size="2x" />
-              </Link>
-            </div>
-            <div className="col">
-              <Link to="/Cv" className="btn btn-outline btn-social">
-                <FontAwesomeIcon icon={faFile} size="2x" />
-              </Link>
-            </div>
-          </div>
+          
         </div>
       </div>
     </div>

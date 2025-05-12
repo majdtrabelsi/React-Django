@@ -13,6 +13,7 @@ import 'subscription_screen.dart';
 import 'login_screen.dart';
 import 'support_contact_screen.dart';
 import '../services/auth_service.dart';
+import 'company_offers_screen.dart';
 
 class HomeCompanyScreen extends StatefulWidget {
   final String firstName;
@@ -111,6 +112,10 @@ class _HomeCompanyScreenState extends State<HomeCompanyScreen> {
                     _buildCard(context, icon: Icons.support_agent, label: "Support", onTap: () {
                       Navigator.push(context, FadeRoute(page: const ContactScreen()));
                     }),
+                    _buildCard(context, icon: Icons.work_outline, label: "Offers", onTap: () {
+                      Navigator.push(context, FadeRoute(page: const CompanyOffersScreen()));
+                    }),
+                    
                     _buildCard(context, icon: Icons.logout, label: "Logout", onTap: () => logoutUser(context)),
                   ],
                 ),

@@ -8,12 +8,13 @@ function Login() {
   const [isLoading, setIsLoading] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [otp, setOtp] = useState('');
   const [error, setError] = useState('');
   const [csrfToken, setCsrfToken] = useState('');
+  const [twoFactorStep, setTwoFactorStep] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Fetch CSRF token
   useEffect(() => {
     fetch('http://localhost:8000/api/accounts/csrf/', {
       credentials: 'include',
@@ -23,7 +24,6 @@ function Login() {
       .catch(err => console.error('CSRF fetch error:', err));
   }, []);
 
-  // Redirect helper
   const redirectToDashboard = (userType) => {
     switch (userType) {
       case 'company':
@@ -40,7 +40,6 @@ function Login() {
     }
   };
 
-  // If already logged in → redirect to dashboard
   useEffect(() => {
     const checkLoginStatus = async () => {
       try {
@@ -61,7 +60,6 @@ function Login() {
     checkLoginStatus();
   }, []);
 
-  // Handle auto-login from payment redirect
   useEffect(() => {
     const autoLogin = async () => {
       const { email: emailFromState, password: passwordFromState } = location.state || {};
@@ -86,8 +84,6 @@ function Login() {
         });
 
         const result = await res.json();
-        console.log('✅ Auto-login result:', result);
-
         if (res.ok) {
           redirectToDashboard(result.type);
         } else {
@@ -103,7 +99,6 @@ function Login() {
     autoLogin();
   }, [csrfToken, location.state]);
 
-  // Manual login
   const handleSubmit = async (event) => {
     event.preventDefault();
     setError('');
@@ -121,9 +116,10 @@ function Login() {
 
       const result = await res.json();
 
-      if (res.ok) {
+      if (res.status === 206 && result['2fa_required']) {
+        setTwoFactorStep(true);
+      } else if (res.ok) {
         const { type, is_paid, trial_expired } = result;
-
         if (type === 'company' && (!is_paid || trial_expired)) {
           setError('⏳ Trial or subscription expired. Redirecting...');
           setTimeout(() => {
@@ -159,10 +155,36 @@ function Login() {
     }
   };
 
+  const handleOtpSubmit = async (event) => {
+    event.preventDefault();
+    setError('');
+
+    try {
+      const res = await fetch('http://localhost:8000/api/accounts/verify-2fa/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrfToken,
+        },
+        credentials: 'include',
+        body: JSON.stringify({ token: otp }),
+      });
+
+      const result = await res.json();
+      if (res.ok) {
+        redirectToDashboard(result.type);
+      } else {
+        setError(result.error || 'Invalid 2FA token.');
+      }
+    } catch (err) {
+      console.error('OTP error:', err);
+      setError('Something went wrong verifying OTP.');
+    }
+  };
+
   return (
     <div className="container-xxl bg-white p-0">
       <Nav />
-
       {isLoading ? (
         <div
           id="spinner"
@@ -173,91 +195,88 @@ function Login() {
           </div>
         </div>
       ) : (
-        <div className="container-xxl position-relative p-0">
-          <div className="container-xxl bg-primary page-header">
-            <div className="container text-center">
-              <h1 className="text-white animated zoomIn mb-3">Login</h1>
-              <nav aria-label="breadcrumb">
-                <ol className="breadcrumb justify-content-center">
-                  <li className="breadcrumb-item">
-                    <a className="text-white" href="/">Home</a>
-                  </li>
-                  <li className="breadcrumb-item text-white active" aria-current="page">Login</li>
-                </ol>
-              </nav>
-            </div>
-          </div>
+        <div className="container-xxl py-6">
+          <div className="container">
+            <div className="row justify-content-center">
+              <div className="col-md-6 col-lg-5">
+                <div className="card shadow-sm border-0 p-4">
+                  <h4 className="text-center mb-4">Login to Your Account</h4>
 
-          <div className="container-xxl py-6">
-            <div className="container">
-              <div className="mx-auto text-center" style={{ maxWidth: '600px' }}>
-                <div className="d-inline-block border rounded-pill text-primary px-4 mb-3">Login</div>
-                <h2 className="mb-5">It's Simple And Quick.</h2>
-              </div>
+                  {error && <div className="alert alert-danger">{error}</div>}
 
-              <div className="row justify-content-center">
-                <div className="col-lg-7">
-                  {error && <div className="alert alert-danger mt-3">{error}</div>}
-                  <form id="login" onSubmit={handleSubmit}>
-                    <div className="row g-3 justify-content-md-center">
-                      <div className="col-md-6">
-                        <div className="form-floating">
-                          <input
-                            name="email"
-                            type="email"
-                            className="form-control"
-                            id="user"
-                            placeholder="User Name"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                          />
-                          <label htmlFor="user">User Name/E-mail</label>
-                        </div>
+                  {twoFactorStep ? (
+                    <form onSubmit={handleOtpSubmit}>
+                      <div className="form-floating mb-3">
+                        <input
+                          type="text"
+                          className="form-control"
+                          placeholder="Enter OTP"
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value)}
+                        />
+                        <label>Enter 2FA Code</label>
                       </div>
-                    </div>
-
-                    <div className="row g-3 mt-2 justify-content-md-center">
-                      <div className="col-md-6">
-                        <div className="form-floating">
-                          <input
-                            name="password"
-                            type="password"
-                            className="form-control"
-                            id="pass"
-                            placeholder="Password"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                          />
-                          <label htmlFor="pass">Password</label>
-                        </div>
+                      <button className="btn btn-primary w-100 py-2" type="submit">
+                        Verify OTP
+                      </button>
+                    </form>
+                  ) : (
+                    <form onSubmit={handleSubmit}>
+                      <div className="form-floating mb-3">
+                        <input
+                          name="email"
+                          type="email"
+                          className="form-control"
+                          id="email"
+                          placeholder="User Email"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                        />
+                        <label htmlFor="email">Email address</label>
                       </div>
-                    </div>
 
-                    <div className="row g-3 mt-2 justify-content-md-center">
-                      <div className="col-6">
-                        <input className="form-check-input" type="checkbox" id="remember" />
-                        <label htmlFor="remember">Remember me</label>
+                      <div className="form-floating mb-3">
+                        <input
+                          name="password"
+                          type="password"
+                          className="form-control"
+                          id="password"
+                          placeholder="Password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                        />
+                        <label htmlFor="password">Password</label>
                       </div>
-                    </div>
 
-                    <div className="row g-3 mt-2 justify-content-md-center">
-                      <div className="col-6">
-                        <button className="btn btn-primary w-100 py-3" type="submit">
-                          Login
+                      <div className="d-flex justify-content-between align-items-center mb-3">
+                        <button
+                          type="button"
+                          className="btn btn-link p-0 text-decoration-none"
+                          onClick={() => navigate('/forgot-password')}
+                          style={{ fontSize: '0.9rem' }}
+                        >
+                          Forgot password?
                         </button>
                       </div>
-                    </div>
-                  </form>
+
+                      <button className="btn btn-primary w-100 py-2" type="submit">
+                        Log In Securely
+                      </button>
+                    </form>
+                  )}
+
+                  <p className="text-center text-muted mt-3">
+                    Don't have an account?{' '}
+                    <a href="/signup" className="text-primary text-decoration-none">
+                      Sign up
+                    </a>
+                  </p>
                 </div>
               </div>
             </div>
           </div>
         </div>
       )}
-
-      <a href="#" className="btn btn-lg btn-primary btn-lg-square back-to-top">
-        <i className="bi bi-arrow-up"></i>
-      </a>
     </div>
   );
 }

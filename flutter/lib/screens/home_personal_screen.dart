@@ -13,6 +13,7 @@ import 'subscription_screen.dart';
 import 'login_screen.dart';
 import 'support_contact_screen.dart';
 import '../services/auth_service.dart';
+import 'offer_screen.dart';
 
 class HomePersonalScreen extends StatefulWidget {
   final String firstName;
@@ -81,7 +82,17 @@ class _HomePersonalScreenState extends State<HomePersonalScreen> {
           backgroundColor: Colors.green,
           title: const Text("Personal Account"),
           automaticallyImplyLeading: false,
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.notifications_none),
+              tooltip: 'Notifications',
+              onPressed: () {
+                Navigator.pushNamed(context, '/notifications');
+              },
+            ),
+          ],
         ),
+
         body: Padding(
           padding: const EdgeInsets.all(20),
           child: Column(
@@ -110,6 +121,9 @@ class _HomePersonalScreenState extends State<HomePersonalScreen> {
                     }),
                     _buildCard(context, icon: Icons.support_agent, label: "Support", onTap: () {
                       Navigator.push(context, FadeRoute(page: const ContactScreen()));
+                    }),
+                    _buildCard(context, icon: Icons.work_outline, label: "Offers", onTap: () {
+                      Navigator.push(context, FadeRoute(page: const OffersScreen()));
                     }),
                     _buildCard(context, icon: Icons.logout, label: "Logout", onTap: () => logoutUser(context)),
                   ],

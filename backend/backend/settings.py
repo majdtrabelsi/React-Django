@@ -56,12 +56,16 @@ MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
 ]
 
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'  # Or your email provider's SMTP server
+#EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = 'accounts.emails_backend.UnsafeEmailBackend'
+EMAIL_HOST = 'smtp.resend.com'  # Or your email provider's SMTP server
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'your-email@example.com'  # Replace with your email
-EMAIL_HOST_PASSWORD = 'your-email-password'  # Replace with your email password or app password
+EMAIL_HOST_USER = 'resend'  # Replace with your email
+EMAIL_HOST_PASSWORD = 're_at97t6NY_3fdDMaiKBGDThLehHCtv4n8W'  # Replace with your email password or app password
+DEFAULT_FROM_EMAIL = 'onboarding@resend.dev'
+ADMIN_EMAILS = ['abdelbacet.labidi@isimg.tn', 'majd.trabelsi@isimg.tn']
+
 
 REST_FRAMEWORK = {
     'DEFAULT_FILTER_BACKENDS': ['django_filters.rest_framework.DjangoFilterBackend'],
@@ -169,9 +173,13 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 STRIPE_SECRET_KEY = 'sk_test_51RC88KFJihK8kOFpx18p1nRxlnbCgtFrESjDxMYV3yZiutTr7FT7JwHcqGuVeE5MWJMFKJQoBDfTh9xt2CUJKmjZ00yEg7CIza'
 FRONTEND_URL = 'http://localhost:3000/payment/success/?session_id={CHECKOUT_SESSION_ID}'
-
+FRONTEND_U = 'http://localhost:3000'
 STRIPE_CANCEL_URL = 'http://localhost:3000/payment/'
 
 
 STRIPE_COMPANY_PRICE_ID = 'price_1RC9BoFJihK8kOFpYV3Vbjb5'
 STRIPE_PROFESSIONAL_PRICE_ID = 'price_1RC9BaFJihK8kOFpGrWV5t0m'
+
+
+ONESIGNAL_APP_ID = "7a343f18-965a-49a0-9a2b-e65ac87a1834"
+ONESIGNAL_REST_API_KEY = "os_v2_app_pi2d6gewlje2bgrl4znmq6qygtdghrvsykpugf4yujmifuzqrlcd6ymsinyfoq5rmd4ktcl22leli7ai2pus2agjbje72pq7w7tydbi"

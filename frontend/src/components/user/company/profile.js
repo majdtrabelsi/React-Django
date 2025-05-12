@@ -68,7 +68,7 @@ function Profile() {
                 </div>
                 <div style={{paddingLeft:'77em'}} className="row g-4">
                     <div className="col">
-                        <Link to="/"><a title='Social-Media' style={{color:'#553f40'}}  className="btn btn-outline btn-social" >
+                        <Link to="/social-company"><a title='Social-Media' style={{color:'#553f40'}}  className="btn btn-outline btn-social" >
                             <FontAwesomeIcon icon={faUsers} size="2x" /> 
                             </a>
                         </Link>
@@ -77,8 +77,6 @@ function Profile() {
                 </div>
 
             </div>
-            <h2>hihellohihello</h2>
-
         </div>
 
       

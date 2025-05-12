@@ -6,9 +6,10 @@ import 'package:http/http.dart' as http;
 import 'package:dio/dio.dart';
 import '../utils/dio_client.dart';
 import '../screens/login_screen.dart';
+import '../screens/welcome_screen.dart';
 import 'package:flutter/material.dart';
 class AuthService {
-  static const String baseUrl = "http://172.20.10.2:8000/";
+  static const String baseUrl = "http://172.20.10.4:8000/";
 
   // Login user
   static Future<bool> loginUser(String email, String password) async {
@@ -144,7 +145,7 @@ Future<void> logoutUser(BuildContext context) async {
       // 3. Redirect to login
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (_) => const LoginScreen()),
+        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
         (route) => false,
       );
     }

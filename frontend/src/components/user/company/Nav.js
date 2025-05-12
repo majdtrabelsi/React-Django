@@ -38,16 +38,19 @@ function Nav_company() {
       <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
         <span className="fa fa-bars"></span>
       </button>
-      <div style={{marginLeft:'8em'}}  class="input-group w-25 ">
-        <span className="input-group-text" id="addon-wrapping">@</span>
-        <input
-         type="text" className="form-control"  placeholder="Search ..." aria-label="Username" aria-describedby="addon-wrapping"/>
-        
-      </div>
+      
       <div className="collapse navbar-collapse" id="navbarCollapse">
         <div className="navbar-nav ms-auto py-0">
           <Link to="/index-company" className="nav-item nav-link">Home</Link>
-          <Link to="/Profile-company" className="nav-item nav-link">Profile</Link>
+          
+          <div className="nav-item dropdown">
+            <a href="#" className="nav-link dropdown-toggle" data-bs-toggle="dropdown">Profile Setting</a>
+            <div className="dropdown-menu m-0">
+            <Link to="/Profile-company" className="dropdown-item">Profile</Link>
+            <Link to="/chose-domain-comp" className="dropdown-item"> Choose Domain</Link>
+              
+              </div>
+          </div>
           <Link to="/Community-company" className="nav-item nav-link">Community</Link>
           
 

@@ -49,9 +49,16 @@ class LoginView(APIView):
         user = authenticate(request, username=email, password=password)
 
         if user is not None:
+            if user.is_2fa_enabled:
+                # Don't log in yet — wait for OTP verification
+                request.session['pre_2fa_user_id'] = user.id
+                return Response({"message": "2FA required", "2fa_required": True}, status=206)
+
+            # Otherwise, proceed with login
+            login(request, user)
             user_type = user.type
 
-            # Determine if trial expired or subscription ended
+            # Trial/subscription check
             trial_expired = False
             subscription_ended = False
 
@@ -64,9 +71,6 @@ class LoginView(APIView):
 
                 if user.subscription_id and not user.is_paid:
                     subscription_ended = True
-
-            # ✅ Allow login anyway
-            login(request, user)
 
             return Response({
                 'message': 'Login successful!',
@@ -210,62 +214,73 @@ class LogoutView(APIView):
 class UserStatusView(APIView):
     def get(self, request):
         if request.user.is_authenticated:
-            return Response({"isAuthenticated": True, "user": request.user.email, "userType": request.user.type, "is_paid": request.user.is_paid, "user_id": request.user.id})
+            return Response({"isAuthenticated": True, "user": request.user.email, "userType": request.user.type, "is_paid": request.user.is_paid, "user_id": request.user.id, "is_2fa_enabled": request.user.is_2fa_enabled})
         return Response({"isAuthenticated": False}, status=status.HTTP_401_UNAUTHORIZED)
 
 
-from django.core.mail import send_mail
-
+from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_exempt
+from django.conf import settings
+from django.http import JsonResponse
+from django.core.mail import send_mail
 import json
 from .models import ContactMessage
-import json
 
 @csrf_exempt
+@require_POST
 def contact_form(request):
-    if request.method == 'POST':
-        try:
-            # Parse the JSON data from the request
-            data = json.loads(request.body)
-            name = data.get('name')
-            email = data.get('email')
-            subject = data.get('subject')
-            message = data.get('message')
+    try:
+        data = json.loads(request.body)
+        name = data.get('name')
+        email = data.get('email')
+        subject = data.get('subject')
+        message = data.get('message')
 
-            # Check if all fields are present
-            if not all([name, email, subject, message]):
-                return JsonResponse({'error': 'All fields are required.'}, status=400)
+        if not all([name, email, subject, message]):
+            return JsonResponse({'error': 'All fields are required.'}, status=400)
 
-            # Save the contact message in the database
-            contact_message = ContactMessage.objects.create(
-                name=name,
-                email=email,
-                subject=subject,
-                message=message
-            )
+        # Save to DB
+        ContactMessage.objects.create(
+            name=name,
+            email=email,
+            subject=subject,
+            message=message
+        )
 
-            # Admin email content
-            # admin_subject = f"New Contact Message from {name} - {subject}"
-            # admin_message = f"Name: {name}\nEmail: {email}\nMessage:\n{message}"
+        # Email content
+        admin_subject = f"New Contact Message from {name} - {subject}"
+        admin_message = f"Name: {name}\nEmail: {email}\nMessage:\n{message}"
 
-            # Customer email content (confirmation)
-            #customer_subject = "Thank you for contacting us!"
-            #customer_message = f"Hi {name},\n\nThank you for reaching out to us. We have received your message:\n\n{message}\n\nBest regards,\nYour Company Name"
+        customer_subject = "Thank you for contacting us!"
+        customer_message = (
+            f"Hi {name},\n\n"
+            "Thank you for reaching out to us. We have received your message:\n\n"
+            f"{message}\n\n"
+            "Best regards,\nYour Company Name"
+        )
 
-            # Sending email to the admin
-            # send_mail(admin_subject, admin_message, 'your-email@example.com', ['admin-email@example.com'])
+        # Send to admin
+        send_mail(
+            admin_subject,
+            admin_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [getattr(settings, 'ADMIN_EMAIL', 'abdelbacet.labidi@isimg.tn')]
+        )
 
-            # Sending confirmation email to the customer
-            # send_mail(customer_subject, customer_message, 'your-email@example.com', [email])
+        # Confirmation to customer
+        send_mail(
+            customer_subject,
+            customer_message,
+            settings.DEFAULT_FROM_EMAIL,
+            [email]
+        )
 
-            # Return success response
-            return JsonResponse({'success': 'Message sent successfully!'})
+        return JsonResponse({'success': 'Message sent successfully!'})
 
-        except Exception as e:
-            print(f"Error occurred: {str(e)}")
-            return JsonResponse({'error': 'Failed to send message. Please try again later.'}, status=500)
-    else:
-        return JsonResponse({'error': 'Invalid request method.'}, status=405)
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return JsonResponse({'error': 'Failed to send message.'}, status=500)
+
 
 class ProfileViewSet(viewsets.ModelViewSet):
     serializer_class = ProfileSerializer
@@ -326,9 +341,9 @@ class UserCompanyView(APIView):
         logged_in_user = request.user
 
         # Fetch all users from the database
-        users = User.objects.filter(type='company').exclude(id=logged_in_user.id)
+        users = User.objects.filter(type='company')
         # You can return specific fields like username, email, etc.
-        user_data = [{"id":user.id,  "firstname": user.firstname, "lastname": user.lastname} for user in users]
+        user_data = [{"id":user.id,  "firstname": user.first_name, "lastname": user.last_name,"company_name": user.companyname,"user_name":user.username} for user in users]
         return Response(user_data, status=status.HTTP_200_OK)
 
 
@@ -339,7 +354,7 @@ class UserPersonProView(APIView):
         # Fetch all users from the database
         users = User.objects.filter(type__in=['personal', 'professional'])
         # You can return specific fields like username, email, etc.
-        user_data = [{"id":user.id,"firstname": user.firstname, "lastname": user.lastname} for user in users]
+        user_data = [{"id":user.id,"firstname": user.first_name, "lastname": user.last_name} for user in users]
         return Response(user_data, status=status.HTTP_200_OK)
     
 
@@ -356,7 +371,7 @@ class OfferViewSet(viewsets.ModelViewSet):
     serializer_class = OfferSerializer
     queryset = Offer.objects.all()
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ['user_name']  # Allow filtering by 'user_name'
+    filterset_fields = ['user_name']
 
 
 
@@ -411,26 +426,39 @@ class SkillViewSet(viewsets.ModelViewSet):
     
 
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
+#@permission_classes([IsAuthenticated])
 def social_media_links(request):
+    # Default: use the authenticated user
     user = request.user
+
+    # Allow GET by ?user_name=... for company viewers
+    if request.method == 'GET' and 'user_name' in request.GET:
+        try:
+            user = User.objects.get(email=request.GET['user_name'])
+        except User.DoesNotExist:
+            return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+
     try:
         social_links = SocialMediaLink.objects.get(user=user)
     except SocialMediaLink.DoesNotExist:
+        if request.method == 'GET':
+            # Return empty structure if not found
+            return Response({}, status=status.HTTP_200_OK)
+        # Allow POST to create links for current user
         social_links = SocialMediaLink.objects.create(user=user)
 
     if request.method == 'POST':
-        print("🔹 Received POST request:", request.data)  # Debugging
+        # Prevent editing other users' social data
+        if user != request.user:
+            return Response({"detail": "You cannot edit this user's data."}, status=status.HTTP_403_FORBIDDEN)
 
         serializer = SocialMediaLinkSerializer(social_links, data=request.data, partial=True)
         if serializer.is_valid():
             serializer.save()
-            print("Link updated successfully:", serializer.data)  # Debugging
             return Response(serializer.data, status=status.HTTP_200_OK)
-
-        print("Serializer Errors:", serializer.errors)  # Debugging
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
+    # GET request
     serializer = SocialMediaLinkSerializer(social_links)
     return Response(serializer.data)
 
@@ -575,6 +603,7 @@ def payment(request):
     try:
         user = request.user
         plan_type = request.data.get('plan')
+        print("🔥 Received plan from frontend:", plan_type)
 
         # Map personal users to the 'professional' plan
         if plan_type == 'personal':
@@ -640,7 +669,7 @@ def payment_success(request):
         # ✅ Invoice public URL
         invoice_id = session.invoice or session.id
         invoice_url = None
-        if BillingHistory.objects.filter(stripe_invoice_id=stripe_invoice_id).exists():
+        if BillingHistory.objects.filter(stripe_invoice_id=invoice_id).exists():
             return Response({'message': 'Payment already verified.'}, status=200)
 
 
@@ -831,13 +860,69 @@ from .models import Rqoffer
 from .serializers import RqofferSerializer
 from .models import ChatStatus
 
+from .models import OneSignalPlayer
+from .utils import send_onesignal_notification
+
 class RqofferViewSet(viewsets.ModelViewSet):
     queryset = Rqoffer.objects.all()
     serializer_class = RqofferSerializer
     filter_backends = (DjangoFilterBackend,)
-    filterset_fields = ['id_offer']  # Allow filtering by 'user_name'
+    filterset_fields = ['id_offer']
+
+    def perform_create(self, serializer):
+        rqoffer = serializer.save()
+
+        try:
+            # Fetch the company user using name_company
+            company_user = User.objects.get(email=rqoffer.name_company, type='company')
+            player = OneSignalPlayer.objects.filter(user=company_user).first()
+
+            if player:
+                send_onesignal_notification(
+                    player.player_id,
+                    "📨 New Offer Request",
+                    f"{rqoffer.name_person} sent you a request."
+                )
+            else:
+                print("❌ No OneSignalPlayer found for company:", rqoffer.name_company)
+        except User.DoesNotExist:
+            print("❌ Company user not found with name:", rqoffer.name_company)
+
+
+    def update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        old_status = instance.rp_offer
+
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+
+        new_status = serializer.validated_data.get("rp_offer")
+        if new_status and new_status != old_status:
+            player = OneSignalPlayer.objects.filter(user__username=instance.name_person).first()
+
+            if player:
+                if new_status == 'accept':
+                    msg = "🎉 Your offer has been accepted!"
+                elif new_status == 'refuse':
+                    msg = "❌ Your offer has been declined."
+                else:
+                    msg = None
+
+                if msg:
+                    send_onesignal_notification(
+                        player.player_id,
+                        "Offer Status Update",
+                        msg
+                    )
+
+        return Response(serializer.data)
+
+
+
 from .models import ChatMessage
 from .utils import is_user_allowed_in_chat
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_messages(request, offer_id):
@@ -877,6 +962,8 @@ def get_messages(request, offer_id):
     })
 
 from .models import Rqoffer
+from .models import OneSignalPlayer
+from .utils import send_onesignal_notification
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def send_message(request, offer_id):
@@ -901,6 +988,18 @@ def send_message(request, offer_id):
         sender=request.user,
         text=text,
     )
+    # After message is created
+    # Find recipient
+    recipient = chat.user if message.sender != chat.user else chat.company
+    player = OneSignalPlayer.objects.filter(user=recipient).first()
+
+    if player:
+        send_onesignal_notification(
+            player.player_id,
+            "💬 New Message",
+            f"New message from {request.user.first_name or 'User'}"
+        )
+
 
     return Response({'status': 'sent', 'message_id': message.id})
 
@@ -951,8 +1050,7 @@ def update_typing(request, offer_id):
     status.save()
     return Response({'status': 'updated'})
 
-# community/views.py
-# community/views.py
+
 # community/views.py
 from rest_framework import generics
 from .models import Post, Category
@@ -981,3 +1079,271 @@ from .serializers import ReplySerializer
 class ReplyListCreateView(generics.ListCreateAPIView):
     queryset = Reply.objects.all()
     serializer_class = ReplySerializer
+
+
+
+
+from django.contrib.auth.decorators import login_required
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
+from .models import OneSignalPlayer
+
+@csrf_exempt
+@login_required
+def register_player_id(request):
+    if request.method == 'POST':
+        data = json.loads(request.body)
+        player_id = data.get('player_id')
+
+        if not player_id:
+            return JsonResponse({'error': 'Missing player_id'}, status=400)
+
+        # Save or update
+        OneSignalPlayer.objects.filter(user=request.user).exclude(player_id=player_id).delete()
+        obj, created = OneSignalPlayer.objects.update_or_create(
+            user=request.user,
+            defaults={'player_id': player_id}
+        )
+
+        return JsonResponse({'message': 'Player ID saved.'}, status=200)
+
+    return JsonResponse({'error': 'Invalid request'}, status=405)
+
+
+
+from .models import WorkProfile
+from .serializers import WorkProfileSerializer
+
+@api_view(['GET', 'POST', 'PUT'])
+@permission_classes([IsAuthenticated])
+def work_profile_view(request):
+    user = request.user
+
+    try:
+        profile = WorkProfile.objects.get(user=user)
+    except WorkProfile.DoesNotExist:
+        profile = None
+
+    if request.method in ['POST', 'PUT']:
+        serializer = WorkProfileSerializer(instance=profile, data=request.data)
+        if serializer.is_valid():
+            instance = serializer.save(user=user)
+            return Response(WorkProfileSerializer(instance).data, status=status.HTTP_200_OK)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+    if request.method == 'GET':
+        if profile:
+            serializer = WorkProfileSerializer(profile)
+            return Response(serializer.data)
+        return Response({}, status=status.HTTP_200_OK)
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def list_work_profiles(request):
+    profiles = WorkProfile.objects.select_related('user').all()
+    data = []
+    for profile in profiles:
+        data.append({
+            'id' : profile.user.id,
+            'firstname': profile.user.first_name,
+            'lastname': profile.user.last_name,
+            'email': profile.user.email,
+            'domain': profile.domain,
+            'specialty': profile.specialty,
+            'description': profile.description,
+        })
+    return Response(data)
+
+
+import pyotp
+import qrcode
+import io
+import base64
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def setup_2fa(request):
+    user = request.user
+
+    if not user.two_factor_secret:
+        user.two_factor_secret = pyotp.random_base32()
+        user.save()
+
+    # Generate QR code
+    uri = user.get_totp_uri()
+    img = qrcode.make(uri)
+    buffer = io.BytesIO()
+    img.save(buffer, format='PNG')
+    qr_code_base64 = base64.b64encode(buffer.getvalue()).decode()
+
+    return Response({
+        'qr_code': qr_code_base64,
+        'secret': user.two_factor_secret,
+        'uri': uri
+    })
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def enable_2fa(request):
+    token = request.data.get("token")
+    user = request.user
+
+    if user.verify_otp(token):
+        user.is_2fa_enabled = True
+        user.save()
+        return Response({"message": "2FA enabled successfully."})
+    return Response({"error": "Invalid token"}, status=400)
+
+@api_view(['POST'])
+def verify_2fa_token(request):
+    token = request.data.get("token")
+    user_id = request.session.get('pre_2fa_user_id')
+
+    if not user_id:
+        return Response({"error": "No 2FA session found"}, status=400)
+
+    try:
+        user = User.objects.get(id=user_id)
+    except User.DoesNotExist:
+        return Response({"error": "User not found"}, status=404)
+
+    if user.verify_otp(token):
+        login(request, user)
+        del request.session['pre_2fa_user_id']
+
+        user_type = user.type
+        trial_expired = False
+        subscription_ended = False
+
+        if user_type == 'company':
+            joined = user.date_joined
+            trial_end = joined + timedelta(days=15)
+
+            if not user.is_paid and now() > trial_end:
+                trial_expired = True
+
+            if user.subscription_id and not user.is_paid:
+                subscription_ended = True
+
+        return Response({
+            'message': '2FA verification successful!',
+            'type': user_type,
+            'is_paid': user.is_paid,
+            'trial_expired': trial_expired,
+            'subscription_ended': subscription_ended,
+        }, status=status.HTTP_200_OK)
+
+    return Response({"error": "Invalid 2FA token"}, status=400)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def disable_2fa(request):
+    user = request.user
+
+    if not user.is_2fa_enabled:
+        return Response({'message': '2FA is already disabled.'}, status=status.HTTP_200_OK)
+
+    user.is_2fa_enabled = False
+    user.two_factor_secret = None
+    user.save()
+
+    return Response({'message': '2FA has been disabled successfully.'}, status=status.HTTP_200_OK)
+
+
+from django.contrib.auth.tokens import default_token_generator
+from django.utils.http import urlsafe_base64_encode
+from django.utils.encoding import force_bytes
+from django.contrib.auth import get_user_model
+from django.core.mail import send_mail
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from rest_framework import status
+from django.conf import settings
+
+User = get_user_model()
+
+@api_view(['POST'])
+def send_reset_email(request):
+    email = request.data.get('email')
+    try:
+        user = User.objects.get(email=email)
+        uid = urlsafe_base64_encode(force_bytes(user.pk))
+        token = default_token_generator.make_token(user)
+        reset_link = f"{settings.FRONTEND_U}/reset-password/{uid}/{token}"  # React
+        # or Flutter deep link: myapp://reset-password/{uid}/{token}
+
+        send_mail(
+            subject='Reset your password',
+            message=f'Click the link to reset your password: {reset_link}',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[email],
+        )
+
+        return Response({'message': 'Password reset email sent.'})
+    except User.DoesNotExist:
+        return Response({'error': 'No user found with this email.'}, status=404)
+
+
+from django.utils.http import urlsafe_base64_decode
+from django.contrib.auth.tokens import default_token_generator
+
+@api_view(['POST'])
+def verify_reset_token(request):
+    uidb64 = request.data.get('uid')
+    token = request.data.get('token')
+
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = User.objects.get(pk=uid)
+
+        if default_token_generator.check_token(user, token):
+            return Response({'valid': True})
+        else:
+            return Response({'valid': False}, status=400)
+
+    except Exception:
+        return Response({'valid': False}, status=400)
+
+
+@api_view(['POST'])
+def reset_password(request):
+    uidb64 = request.data.get('uid')
+    token = request.data.get('token')
+    password = request.data.get('new_password')
+
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = User.objects.get(pk=uid)
+
+        if not default_token_generator.check_token(user, token):
+            return Response({'error': 'Invalid or expired token'}, status=400)
+
+        user.set_password(password)
+        user.save()
+        return Response({'message': 'Password updated successfully.'})
+    except Exception:
+        return Response({'error': 'Invalid request.'}, status=400)
+
+
+@api_view(['POST'])
+def validate_reset_token(request):
+    uid = request.data.get('uid')
+    token = request.data.get('token')
+
+    try:
+        user = User.objects.get(pk=uid)
+    except (User.DoesNotExist, ValueError):
+        return Response({'error': 'Invalid user'}, status=400)
+
+    if not default_token_generator.check_token(user, token):
+        return Response({'error': 'Invalid or expired token'}, status=400)
+
+    return Response({'valid': True})
+
+
+@api_view(['GET'])
+def all_profiles(request):
+    profiles = Profile.objects.all()
+    serializer = ProfileSerializer(profiles, many=True)
+    return Response(serializer.data)

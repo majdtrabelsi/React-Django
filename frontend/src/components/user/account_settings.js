@@ -57,6 +57,8 @@ function SettingAccountPage() {
         return <SubscriptionManagement accountType={accountType} setActiveTab={setActiveTab} />;
       case 'ChangePassword':
         return <ChangePassword />;
+      case 'TwoFA':
+        return <TwoFATab />;
       default:
         return <Dashboard />;
     }
@@ -76,7 +78,7 @@ function SettingAccountPage() {
           <div className="row justify-content-center mb-4">
             <div className="col-lg-8">
               <div className="d-flex justify-content-center">
-                {['dashboard', 'Billing', 'BillingHistory', 'Subscription', 'ChangePassword'].map((tab) => (
+              {['dashboard', 'Billing', 'BillingHistory', 'Subscription', 'ChangePassword', 'TwoFA'].map((tab) => (
                   <button
                     key={tab}
                     className={`btn btn-outline-primary mx-2 ${activeTab === tab ? 'active' : ''}`}
@@ -840,6 +842,111 @@ return (
     {error && <div className="alert alert-danger mt-4">{error}</div>}
   </div>
 );
+};
+const TwoFATab = () => {
+  const [enabled, setEnabled] = useState(false);
+  const [qrData, setQrData] = useState(null);
+  const [token, setToken] = useState('');
+  const [message, setMessage] = useState('');
+  const [csrfToken, setCsrfToken] = useState('');
+
+  // Fetch 2FA status and CSRF
+  useEffect(() => {
+    fetch('http://localhost:8000/api/accounts/accountstatus/', {
+      credentials: 'include',
+    })
+      .then(res => res.json())
+      .then(data => {
+        setEnabled(data.has_2fa || data.is_2fa_enabled); // backend should include this
+      });
+
+    fetch('http://localhost:8000/api/accounts/csrf/', {
+      credentials: 'include',
+    })
+      .then(res => res.json())
+      .then(data => setCsrfToken(data.csrfToken));
+  }, []);
+
+  const fetchQR = () => {
+    fetch('http://localhost:8000/api/accounts/setup-2fa/', {
+      credentials: 'include',
+    })
+      .then(res => res.json())
+      .then(data => setQrData(data));
+  };
+
+  const handleEnable = () => {
+    fetch('http://localhost:8000/api/accounts/enable-2fa/', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+      body: JSON.stringify({ token }),
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.message) {
+          setMessage('✅ 2FA enabled successfully.');
+          setEnabled(true);
+          setQrData(null);
+          setToken('');
+        } else {
+          setMessage('❌ Invalid token.');
+        }
+      });
+  };
+
+  const handleDisable = () => {
+    fetch('http://localhost:8000/api/accounts/disable-2fa/', {
+      method: 'POST',
+      credentials: 'include',
+      headers: {
+        'X-CSRFToken': csrfToken,
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.message) {
+          setEnabled(false);
+          setQrData(null);
+          setToken('');
+          setMessage('🔕 2FA has been disabled.');
+        }
+      });
+  };
+
+  return (
+    <div className="text-center">
+      <h3 className="mb-4">Two-Factor Authentication (2FA)</h3>
+
+      {message && <div className="alert alert-info">{message}</div>}
+
+      {enabled ? (
+        <div>
+          <p>🔐 2FA is currently <strong>enabled</strong> on your account.</p>
+          <button className="btn btn-danger" onClick={handleDisable}>Disable 2FA</button>
+        </div>
+      ) : qrData ? (
+        <div>
+          <p>📱 Scan this QR code with Google or Microsoft Authenticator:</p>
+          <img src={`data:image/png;base64,${qrData.qr_code}`} alt="QR Code" style={{ width: 200, marginBottom: 10 }} />
+          <p><strong>Manual Code:</strong> {qrData.secret}</p>
+          <input
+            type="text"
+            className="form-control my-3"
+            placeholder="Enter code from app"
+            value={token}
+            onChange={(e) => setToken(e.target.value)}
+          />
+          <button className="btn btn-success" onClick={handleEnable}>Verify & Enable</button>
+        </div>
+      ) : (
+        <button className="btn btn-primary" onClick={fetchQR}>Setup 2FA</button>
+      )}
+    </div>
+  );
 };
 
 export default SettingAccountPage;

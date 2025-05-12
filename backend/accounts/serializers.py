@@ -145,7 +145,7 @@ from .models import Offer
 class OfferSerializer(serializers.ModelSerializer):
     class Meta:
         model = Offer
-        fields = ['id','user_name','title', 'description']
+        fields = '__all__'
 
 
 from .models import Portfolio
@@ -236,11 +236,11 @@ class BillingHistorySerializer(serializers.ModelSerializer):
 
 
 from .models import Rqoffer
-
 class RqofferSerializer(serializers.ModelSerializer):
     class Meta:
         model = Rqoffer
-        fields = ['id', 'name_person', 'name_company', 'id_offer','rp_offer']
+        fields = ['id', 'name_person', 'name_company', 'id_offer', 'rp_offer']
+
 
 
 # community/serializers.py
@@ -274,3 +274,17 @@ class ReplySerializer(serializers.ModelSerializer):
     class Meta:
         model = Reply
         fields = ['id', 'post', 'name', 'message', 'created_at']
+
+
+from .models import WorkProfile
+
+class WorkProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = WorkProfile
+        fields = ['domain', 'specialty', 'description']
+
+
+class ProfileSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Profile
+        fields = ['id', 'name', 'photo', 'user']

@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:io';
 
 class BillingScreen extends StatefulWidget {
@@ -12,7 +13,7 @@ class BillingScreen extends StatefulWidget {
   State<BillingScreen> createState() => _BillingScreenState();
 }
 
-class _BillingScreenState extends State<BillingScreen> {
+class _BillingScreenState extends State<BillingScreen> with WidgetsBindingObserver {
   late Dio dio;
   late PersistCookieJar cookieJar;
 
@@ -32,14 +33,29 @@ class _BillingScreenState extends State<BillingScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _setupDio();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _fetchBillingStatus();
+      _fetchBillingHistory();
+    }
   }
 
   Future<void> _setupDio() async {
     final dir = await getApplicationDocumentsDirectory();
     cookieJar = PersistCookieJar(storage: FileStorage('${dir.path}/.cookies/'));
     dio = Dio(BaseOptions(
-      baseUrl: 'http://172.20.10.2:8000',
+      baseUrl: 'http://172.20.10.4:8000',
       headers: {'Content-Type': 'application/json'},
     ));
     dio.interceptors.add(CookieManager(cookieJar));
@@ -84,7 +100,6 @@ class _BillingScreenState extends State<BillingScreen> {
     return sum % 10 == 0;
   }
 
-
   String _getCardType(String number) {
     if (number.startsWith('34') || number.startsWith('37')) return 'amex';
     return 'other';
@@ -116,7 +131,7 @@ class _BillingScreenState extends State<BillingScreen> {
     final type = _getCardType(cardNumber);
     final expectedCVV = type == 'amex' ? 4 : 3;
     if (cvv.length != expectedCVV) {
-      showMessage("CVV must be \$expectedCVV digits for \${type.toUpperCase()}");
+      showMessage("CVV must be $expectedCVV digits for ${type.toUpperCase()}");
       return false;
     }
 
@@ -225,7 +240,6 @@ class _BillingScreenState extends State<BillingScreen> {
             },
           ),
           const SizedBox(height: 10),
-          const SizedBox(height: 10),
           TextField(
             controller: cvvController,
             decoration: const InputDecoration(labelText: 'CVV', counterText: ''),
@@ -261,12 +275,28 @@ class _BillingScreenState extends State<BillingScreen> {
             if (billingHistory.isEmpty)
               const Text("No billing history found."),
             ...billingHistory.map((item) => ListTile(
-                  leading: const Icon(Icons.receipt, color: Colors.blue),
-                  title: Text(item['description']),
-                  subtitle: Text(item['created_at']),
-                  trailing: Text("\$\${item['amount']}",
-                      style: const TextStyle(fontWeight: FontWeight.bold)),
-                )),
+              leading: const Icon(Icons.receipt, color: Colors.blue),
+              title: Text(item['description']),
+              subtitle: Text(item['created_at']),
+              trailing: item['stripe_invoice_url'] != null
+                  ? InkWell(
+                      onTap: () async {
+                        final url = item['stripe_invoice_url'];
+                        if (await canLaunchUrl(Uri.parse(url))) {
+                          await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+                        }
+                      },
+                      child: Text(
+                        '\$${item['amount']}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: Colors.blue,
+                          decoration: TextDecoration.underline,
+                        ),
+                      ),
+                    )
+                  : Text('\$${item['amount']}', style: const TextStyle(fontWeight: FontWeight.bold)),
+            )),
           ],
         ),
       ),

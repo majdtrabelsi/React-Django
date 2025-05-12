@@ -299,43 +299,16 @@ function Setting_cv (){
                             </div>
                         </div>
     
-                        <div className="text-center mt-3">
-                            <label htmlFor="my_hidden_input">
-                                <img src={heroImage} alt="Uploaded Preview" style={{ cursor: "pointer", width: '200px', height: 'auto' }} />
-                            </label>
-                            <input 
-                                style={{ display: 'none' }} 
-                                id="my_hidden_input" 
-                                type="file" 
-                                name="photo" 
-                                onChange={(e) => setImageFile(e.target.files[0])} 
-                            />
+                        <div className="text-center mt-10">
+                            <p><b>Curriculum Vitae</b></p>
                         </div>
-    
-                        <div className="mt-3 text-center">
-                            <input 
-                                name="name" 
-                                type="text" 
-                                className="form-control form-control-lg" 
-                                id="Name" 
-                                value={name} 
-                                onChange={(e) => setName(e.target.value)} 
-                                placeholder="Your Name ..."
-                                style={{ width: '60%', margin: 'auto' }}
-                            />
-                        </div>
+
                     </div>
                 </div>
     
                 <div className="row g-2 mt-4 justify-content-center">
-                    <div className="col-4 col-md-2 text-center">
-                        <Link to="/" className="btn btn-outline btn-social">
-                            <FontAwesomeIcon icon={faLinkedin} size="2x" />
-                        </Link>
-                    </div>
-                    <div className="col-4 col-md-2 text-center">
-                        <p className="btn btn-outline btn-social"><FontAwesomeIcon icon={faPhone} size="1x" /> 123456789</p>
-                    </div>
+                   
+                    
                 </div>
     
                 {/* Section for Experience */}

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 import '../utils/fade_transition.dart';
 import 'home_personal_screen.dart';
 import 'home_pro_screen.dart';
@@ -25,7 +26,15 @@ class _LoginScreenState extends State<LoginScreen> {
   void initState() {
     super.initState();
     dio = DioClient.dio;
-    _redirectIfAuthenticated(); // ✅ check login status on screen load
+    _redirectIfAuthenticated();
+
+    // Listen for OneSignal push subscription updates
+    OneSignal.User.pushSubscription.addObserver((state) {
+      final playerId = state.current.id;
+      if (playerId != null) {
+        sendPlayerIdToBackend(playerId);
+      }
+    });
   }
 
   Future<void> _redirectIfAuthenticated() async {
@@ -54,6 +63,18 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
+  Future<void> sendPlayerIdToBackend(String playerId) async {
+    try {
+      await dio.post(
+        '/api/accounts/register-player-id/',
+        data: {'player_id': playerId},
+        options: Options(headers: {'Content-Type': 'application/json'}),
+      );
+    } catch (e) {
+      debugPrint('❌ Error saving playerId: $e');
+    }
+  }
+
   Future<void> _login() async {
     setState(() {
       _loading = true;
@@ -61,11 +82,9 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      // 1. Get CSRF token
       final csrfResponse = await dio.get('/api/accounts/csrf/');
       final csrfToken = csrfResponse.data['csrfToken'];
 
-      // 2. Send login request
       final loginResponse = await dio.post(
         '/api/accounts/login/',
         data: {
@@ -77,20 +96,32 @@ class _LoginScreenState extends State<LoginScreen> {
           'Content-Type': 'application/json',
         }),
       );
+      final loginData = loginResponse.data;
 
-      // 3. Verify authentication
+      if (loginResponse.statusCode == 206 && loginData['2fa_required'] == true) {
+        Navigator.pushReplacement(context, FadeRoute(page: const TwoFactorScreen()));
+        return;
+      }
       final statusResponse = await dio.get('/api/accounts/accountstatus/');
       final data = statusResponse.data;
 
       if (data['isAuthenticated'] == true) {
+        final pushId = OneSignal.User.pushSubscription.id;
+        if (pushId != null) {
+          await sendPlayerIdToBackend(pushId);
+        }
+
         final accountType = data['userType'];
 
         if (accountType == 'personal') {
-          Navigator.pushReplacement(context, FadeRoute(page: const HomePersonalScreen(firstName: 'User')));
+          Navigator.pushReplacement(
+              context, FadeRoute(page: const HomePersonalScreen(firstName: 'User')));
         } else if (accountType == 'professional') {
-          Navigator.pushReplacement(context, FadeRoute(page: HomeProScreen(firstName: 'User')));
+          Navigator.pushReplacement(
+              context, FadeRoute(page: const HomeProScreen(firstName: 'User')));
         } else if (accountType == 'company') {
-          Navigator.pushReplacement(context, FadeRoute(page: HomeCompanyScreen(firstName: 'User')));
+          Navigator.pushReplacement(
+              context, FadeRoute(page: const HomeCompanyScreen(firstName: 'User')));
         } else {
           setState(() {
             _error = 'Unknown account type.';
@@ -144,6 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
               obscureText: true,
               decoration: const InputDecoration(labelText: 'Password'),
             ),
+            
             const SizedBox(height: 30),
             _loading
                 ? const CircularProgressIndicator()

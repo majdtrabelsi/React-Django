@@ -41,12 +41,7 @@ function Nav_person() {
       <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
         <span className="fa fa-bars"></span>
       </button>
-      <div style={{marginLeft:'8em'}}  class="input-group w-25 ">
-        <span className="input-group-text" id="addon-wrapping">@</span>
-        <input
-         type="text" className="form-control"  placeholder="Search ..." aria-label="Username" aria-describedby="addon-wrapping"/>
-        
-      </div>
+      
       <div className="collapse navbar-collapse" id="navbarCollapse">
         <div className="navbar-nav ms-auto py-0">
           <Link to="/index-person" className="nav-item nav-link">Home</Link>
@@ -57,6 +52,7 @@ function Nav_person() {
             <Link to="/Profile-person" className="dropdown-item">Account</Link>
               
             <Link to="/Portfolio" className="dropdown-item">Portfolio</Link>
+            <Link to="/select-domain" className="dropdown-item">Select Domain</Link>
               
             </div>
           </div>

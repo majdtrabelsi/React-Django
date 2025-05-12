@@ -31,10 +31,10 @@ router.register(r'rqoffers', RqofferViewSet, basename='rqoffer')
 
 
 
-
+from .views import work_profile_view,disable_2fa,send_reset_email,verify_reset_token,reset_password
 from django.urls import path
 from .views import LoginView,UserRegistrationProView,UserRegistrationPerView,UserRegistrationCompView,LogoutView,UserStatusView,contact_form,ProfileViewSet,CSRFTokenView
-from .views import social_media_links,ChangePasswordView,accountdatas,BillingHistoryView,payment,payment_success
+from .views import social_media_links,ChangePasswordView,accountdatas,BillingHistoryView,payment,payment_success,list_work_profiles,verify_2fa_token,enable_2fa,setup_2fa
 from . import views
 urlpatterns = [
     path('login/', LoginView.as_view(), name='login'),
@@ -74,6 +74,18 @@ urlpatterns = [
     path('chat/<int:offer_id>/send/', views.send_message),
     path('chat/<int:offer_id>/close/', views.close_chat),
     path('chat-status/<int:offer_id>/', views.chat_status),
-    path('chat/<int:offer_id>/typing/',views.update_typing)
+    path('chat/<int:offer_id>/typing/',views.update_typing),
+    path('register-player-id/', views.register_player_id, name='register_player_id'),
+    path('work-profile/', work_profile_view),
+    path('work-profiles/', list_work_profiles),
+    path('verify-2fa/', verify_2fa_token),
+    path('enable_2fa/', enable_2fa),
+    path('setup_2fa/', setup_2fa),
+    path('disable-2fa/', disable_2fa),
+    path('password-reset/', send_reset_email),
+    path('password-reset/verify/', verify_reset_token),
+    path('password-reset/confirm/', reset_password),
+    path('password-reset/validate/', views.validate_reset_token),
+    path('allprofiles/', views.all_profiles, name='all-profiles'),
 
 ]

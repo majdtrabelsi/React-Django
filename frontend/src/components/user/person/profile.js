@@ -5,7 +5,7 @@ import Nav from './nav';
 import Footer from './Footer';
 
 import Team from '../../../assets/images/team-2.jpg';
-import heroImage from '../../../assets/images/team-2.jpg';
+import heroImage from '../../../assets/images/no-photo.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers, faFile, faGear ,faRightToBracket } from '@fortawesome/free-solid-svg-icons';
 

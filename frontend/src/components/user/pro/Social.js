@@ -4,7 +4,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faFacebook, faGithub, faTwitter, faInstagram, faLinkedin, faTwitch } from '@fortawesome/free-brands-svg-icons';
 import Nav_pro from './Nav';
 import Footer from '../../footer';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faPlus,faLeftLong } from '@fortawesome/free-solid-svg-icons';
+import {Link} from 'react-router-dom';
 function Social() {
   const [links, setLinks] = useState({});
   const [isLoading, setIsLoading] = useState(true);
@@ -95,10 +96,17 @@ function Social() {
 
   return (
     <div className="container-xxl bg-white p-0">
+      <Nav_pro />
       <div className="container-xxl position-relative p-0">
-        <Nav_pro />
         <div className="container-xxl bg-primary page-header">
+        <Link to="/Profile-pro" className="btn btn-outline btn-social">
+                                              <FontAwesomeIcon icon={faLeftLong} size="2x" />
+                                          </Link>
+          <div className="col">
+                                          
+                                      </div>
           <div className="container text-center">
+            
             <h1 className="text-white animated zoomIn mb-3">Social Media</h1>
             <nav aria-label="breadcrumb">
               <ol className="breadcrumb justify-content-center">

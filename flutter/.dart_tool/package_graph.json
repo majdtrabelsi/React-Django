@@ -12,8 +12,11 @@
         "dio",
         "dio_cookie_manager",
         "flutter",
+        "font_awesome_flutter",
         "http",
         "image_picker",
+        "intl",
+        "onesignal_flutter",
         "path_provider",
         "shared_preferences",
         "url_launcher"
@@ -56,6 +59,29 @@
         "test_api",
         "vector_math",
         "vm_service"
+      ]
+    },
+    {
+      "name": "intl",
+      "version": "0.18.1",
+      "dependencies": [
+        "clock",
+        "meta",
+        "path"
+      ]
+    },
+    {
+      "name": "onesignal_flutter",
+      "version": "5.3.0",
+      "dependencies": [
+        "flutter"
+      ]
+    },
+    {
+      "name": "font_awesome_flutter",
+      "version": "10.8.0",
+      "dependencies": [
+        "flutter"
       ]
     },
     {

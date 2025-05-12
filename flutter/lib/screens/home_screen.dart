@@ -7,7 +7,8 @@ import '../screens/login_screen.dart';
 import '../screens/settings_screen.dart'; 
 import '../screens/billing_screen.dart'; 
 import '../screens/subscription_screen.dart'; 
-import '../screens/change_password_screen.dart'; 
+import '../screens/change_password_screen.dart';
+
 
 class HomeScreen extends StatefulWidget {
   final String accountType;

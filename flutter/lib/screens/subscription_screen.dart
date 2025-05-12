@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import 'payment_screen.dart';
 import '../utils/dio_client.dart';
 
 class SubscriptionScreen extends StatefulWidget {
@@ -48,7 +49,6 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
         isLoading = false;
       });
 
-      // Auto downgrade logic
       final now = DateTime.now();
       final renewalDate = DateTime.tryParse(subscriptionInfo?['renewal_date'] ?? '') ?? now;
       final isFree = (subscriptionInfo?['plan'] ?? '').toLowerCase() == 'free';
@@ -115,6 +115,16 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
     }
   }
 
+  Future<String> _resolvePlanToSend() async {
+    try {
+      final res = await dio.get('/api/accounts/accountstatus/');
+      final accountType = (res.data['userType'] ?? '').toString().toLowerCase();
+      return accountType == 'company' ? 'company' : 'professional';
+    } catch (_) {
+      return 'professional'; // fallback
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final isFree = (subscriptionInfo?['plan'] ?? '').toLowerCase() == 'free';
@@ -177,24 +187,41 @@ class _SubscriptionScreenState extends State<SubscriptionScreen> {
                             ),
                           ],
                           const SizedBox(height: 20),
-                          Row(
-                            children: [
-                              if (!isFree && subscriptionInfo?['cancel_at_period_end'] == false) ...[
-                                ElevatedButton(
-                                  onPressed: handleToggleAutoRenew,
-                                  child: Text(subscriptionInfo?['auto_renewal'] == true
-                                      ? 'Disable Auto-Renew'
-                                      : 'Enable Auto-Renew'),
-                                ),
-                                const SizedBox(width: 10),
-                                ElevatedButton(
-                                  onPressed: handleCancelSubscription,
-                                  style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
-                                  child: const Text('Cancel Subscription'),
-                                ),
-                              ]
-                            ],
-                          ),
+                          if (isFree) ...[
+                            ElevatedButton.icon(
+                              onPressed: () async {
+                                final planToSend = await _resolvePlanToSend();
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => PaymentScreen(selectedPlan: planToSend),
+                                  ),
+                                );
+                              },
+                              icon: const Icon(Icons.payment),
+                              label: const Text('Subscribe Now'),
+                              style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                            ),
+                          ] else ...[
+                            Row(
+                              children: [
+                                if (subscriptionInfo?['cancel_at_period_end'] == false) ...[
+                                  ElevatedButton(
+                                    onPressed: handleToggleAutoRenew,
+                                    child: Text(subscriptionInfo?['auto_renewal'] == true
+                                        ? 'Disable Auto-Renew'
+                                        : 'Enable Auto-Renew'),
+                                  ),
+                                  const SizedBox(width: 10),
+                                  ElevatedButton(
+                                    onPressed: handleCancelSubscription,
+                                    style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent),
+                                    child: const Text('Cancel Subscription'),
+                                  ),
+                                ]
+                              ],
+                            ),
+                          ],
                           if (message != null) ...[
                             const SizedBox(height: 20),
                             Text(message!, style: const TextStyle(color: Colors.blue)),

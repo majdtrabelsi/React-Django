@@ -1,39 +1,68 @@
 import 'package:flutter/material.dart';
-import './screens/splash_screen.dart';
-import './screens/SessionCheckerScreen.dart';
+import 'package:pfe_app/screens/splash_screen.dart';
+import 'package:pfe_app/screens/welcome_screen.dart';
+import 'package:pfe_app/screens/notification_screen.dart';
 import 'package:pfe_app/utils/dio_client.dart';
+import 'package:pfe_app/screens/notification_screen_company.dart';
+import 'package:pfe_app/screens/chat.dart';
+import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-
   await DioClient.initialize();
-  // runApp(const MyApp());
-  
-  runApp(const MaterialApp(
 
-    debugShowCheckedModeBanner: false,
-    home: SessionCheckerScreen()
+  OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
+  OneSignal.initialize("7a343f18-965a-49a0-9a2b-e65ac87a1834");
+  OneSignal.Notifications.requestPermission(false);
+  runApp(const PFEApp());
   
-  ));
-
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class PFEApp extends StatelessWidget {
+  const PFEApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'PFE App',
-      theme: ThemeData(
-        primarySwatch: Colors.blue,
-      ),
-      home: const SplashScreen(),
+      theme: ThemeData(primarySwatch: Colors.green),
+      initialRoute: '/',
+      routes: {
+        '/': (context) => const SplashScreen(), // default route
+        '/welcome': (context) => const WelcomeScreen(),
+        '/notifications': (context) => const NotificationsScreen(),
+        
+      },
+      onGenerateRoute: (settings) {
+        if (settings.name == '/chat') {
+          final args = settings.arguments as Map<String, dynamic>;
+          final chatId = args['chatId'] as int;
+
+          return MaterialPageRoute(
+            builder: (context) => ChatScreen(chatId: chatId),
+          );
+        }
+
+        if (settings.name == '/notifications-company') {
+          final args = settings.arguments as Map<String, dynamic>;
+          final offerId = args['offerId'] as int;
+
+          return MaterialPageRoute(
+            builder: (context) => NotificationCompanyScreen(offerId: offerId),
+          );
+        }
+
+        // Fallback
+        return MaterialPageRoute(
+          builder: (context) => const Scaffold(
+            body: Center(child: Text('Page not found')),
+          ),
+        );
+      },
     );
   }
 }
-
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key, required this.title});

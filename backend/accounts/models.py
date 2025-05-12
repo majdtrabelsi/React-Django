@@ -1,6 +1,6 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
+import pyotp
 class User(AbstractUser):
     firstname = models.CharField(max_length=255, blank=True, null=True)
     lastname = models.CharField(max_length=255, blank=True, null=True)
@@ -19,6 +19,22 @@ class User(AbstractUser):
         related_name='custom_user_permissions',  # Change the related_name to avoid conflict
         blank=True
     )
+    is_2fa_enabled = models.BooleanField(default=False)
+    two_factor_secret = models.CharField(max_length=32, blank=True, null=True)
+
+    def get_totp_uri(self):
+        if not self.two_factor_secret:
+            return None
+        return pyotp.TOTP(self.two_factor_secret).provisioning_uri(
+            name=self.email,
+            issuer_name="PFE-APP : "
+        )
+
+    def verify_otp(self, token):
+        if not self.two_factor_secret:
+            return False
+        totp = pyotp.TOTP(self.two_factor_secret)
+        return totp.verify(token)
 
 class ContactMessage(models.Model):
     name = models.CharField(max_length=255)
@@ -68,7 +84,10 @@ class Award(models.Model):
 
 class Offer(models.Model):
     user_name=models.CharField(max_length=255)
+    name_company = models.CharField(max_length=255)
     title = models.CharField(max_length=255)
+    price = models.CharField(max_length=255)
+    hours = models.CharField(max_length=255)
     description = models.TextField()
 
     def __str__(self):
@@ -263,3 +282,21 @@ class Reply(models.Model):
 
     def __str__(self):
         return f"Reply by {self.name} on Post {self.post.id}"
+
+
+class OneSignalPlayer(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    player_id = models.CharField(max_length=200)
+
+    def __str__(self):
+        return f"{self.user.username} - {self.player_id}"
+
+
+class WorkProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
+    domain = models.CharField(max_length=100)
+    specialty = models.CharField(max_length=100)
+    description = models.TextField(blank=True) 
+
+    def __str__(self):
+        return f"{self.user.email} - {self.domain}/{self.specialty}"

@@ -2,7 +2,7 @@ import 'font-awesome/css/font-awesome.min.css';
 import { Link, useNavigate } from 'react-router-dom';
 import Nav_person from './nav';
 import Footer from './Footer';
-import heroImage from '../../../assets/images/team-2.jpg';
+import heroImage from '../../../assets/images/no-photo.png';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers, faFile, faFloppyDisk, faLeftLong } from '@fortawesome/free-solid-svg-icons';
 import React, { useState, useEffect } from "react";
@@ -62,24 +62,27 @@ function Setting() {
 
   const saveProfileData = async () => {
     try {
-      const formData = new FormData(); // Create FormData to handle both text and file fields
+      const formData = new FormData();
       
-      formData.append('name', profileData.name);  // Add the name
+      formData.append('name', profileData.name);
       if (imageFile) {
-        formData.append('photo', imageFile);  // Add the photo file (if any)
+        formData.append('photo', imageFile); 
       }
   
       const response = await fetch("http://localhost:8000/api/accounts/profiledata/", {
         method: "POST",
         headers: {
-          "X-CSRFToken": csrfToken, // CSRF token is still needed
+          "X-CSRFToken": csrfToken,
         },
-        body: formData,  // Use formData instead of JSON
+        body: formData,
         credentials: "include",
       });
       if (!response.ok) {
         navigate('/Profile-person');
         throw new Error("Failed to save profile data");
+      }
+      else{
+        navigate('/Profile-person');
       }
   
       const data = await response.json();

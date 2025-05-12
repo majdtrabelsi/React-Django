@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom'; 
 import Navbar from './Navbar';
+import { checkPasswordStrength } from './passwordUtils';
 
 function SignUpPerson() {
     const [isLoading, setIsLoading] = useState(false);
@@ -11,6 +12,7 @@ function SignUpPerson() {
     const [lastname, setLastName] = useState('');
     const [error, setError] = useState('');
     const [successMessage, setSuccessMessage] = useState('');
+    const [passwordStrength, setPasswordStrength] = useState({ isStrong: false, rules: {} });
 
     const handleSubmit = async (event) => {
         event.preventDefault();
@@ -18,6 +20,10 @@ function SignUpPerson() {
             setError("Passwords do not match");
             return;
         }
+        if (!passwordStrength.isStrong) {
+            setError("Password is too weak.");
+            return;
+          }          
 
         setIsLoading(true);
 
@@ -69,7 +75,9 @@ function SignUpPerson() {
                   
                   if (loginResponse.ok) {
                     setTimeout(() => {
-                        window.location.href = '/index-person';
+                    
+                        window.location.href = '/select-domain';
+                        //window.location.href = '/index-person';
                     }, 2000);}
             } else {
                 setError(responseData.message || 'An error occurred');
@@ -167,10 +175,21 @@ function SignUpPerson() {
                                                 id="password" 
                                                 placeholder="Password"
                                                 value={password}
-                                                onChange={(e) => setPassword(e.target.value)}
+                                                onChange={(e) => {
+                                                    const value = e.target.value;
+                                                    setPassword(value);
+                                                    setPasswordStrength(checkPasswordStrength(value));
+                                                }}
                                             />
                                             <label htmlFor="password">Password</label>
                                         </div>
+                                        <ul className="text-muted small mt-2">
+                                        <li style={{ color: passwordStrength.rules.minLength ? 'green' : 'red' }}>• At least 8 characters</li>
+                                        <li style={{ color: passwordStrength.rules.hasUpper ? 'green' : 'red' }}>• Uppercase letter</li>
+                                        <li style={{ color: passwordStrength.rules.hasLower ? 'green' : 'red' }}>• Lowercase letter</li>
+                                        <li style={{ color: passwordStrength.rules.hasNumber ? 'green' : 'red' }}>• Number</li>
+                                        <li style={{ color: passwordStrength.rules.hasSymbol ? 'green' : 'red' }}>• Symbol (!@#$...)</li>
+                                        </ul>
                                     </div>
                                     <div className="col-md-6">
                                         <div className="form-floating">
