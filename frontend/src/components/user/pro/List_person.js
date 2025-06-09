@@ -17,6 +17,7 @@ function List_person() {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [selectedDomain, setSelectedDomain] = useState('');
+  const [profiles, setProfiles] = useState([]);
   const [selectedSpecialty, setSelectedSpecialty] = useState('');
 
   useEffect(() => {
@@ -25,24 +26,42 @@ function List_person() {
     })
       .then(response => {
         setUsers(response.data);
-        setFilteredUsers(response.data);
       })
       .catch(error => {
-        console.error('Error fetching user data:', error);
+        console.error('Error fetching work profiles:', error);
       });
   }, []);
 
   useEffect(() => {
-    if (!selectedDomain && !selectedSpecialty) {
-      setFilteredUsers(users);
-    } else {
-      const filtered = users.filter(user =>
-        (!selectedDomain || user.domain === selectedDomain) &&
-        (!selectedSpecialty || user.specialty === selectedSpecialty)
-      );
-      setFilteredUsers(filtered);
-    }
+    axios.get('http://localhost:8000/api/accounts/allprofiles/', {
+      withCredentials: true,
+    })
+      .then(response => {
+        setProfiles(response.data);
+      })
+      .catch(error => {
+        console.error('Error fetching all profiles:', error);
+      });
+  }, []);
+
+  useEffect(() => {
+    const filtered = users.filter(user =>
+      user.specialty?.toLowerCase() !== "company" &&
+      (!selectedDomain || user.domain === selectedDomain) &&
+      (!selectedSpecialty || user.specialty === selectedSpecialty)
+    );
+    setFilteredUsers(filtered);
   }, [selectedDomain, selectedSpecialty, users]);
+
+  const getPersonPhoto = (userId) => {
+    const profile = profiles.find((p) => p.user === userId);
+    if (profile && profile.photo) {
+      return profile.photo.startsWith('http')
+        ? profile.photo
+        : `http://localhost:8000${profile.photo}`;
+    }
+    return Team;
+  };
 
   return (
     <div className="container-xxl bg-white p-0">
@@ -104,15 +123,15 @@ function List_person() {
                 <div key={user.email} className="col-lg-3 col-md-6">
                   <div className="card text-center shadow-sm border-0 h-100">
                     <img
-                      src={Team}
-                      className="card-img-top rounded-circle mx-auto mt-4"
+                      src={getPersonPhoto(user.id)}
                       alt="Profile"
+                      className="card-img-top rounded-circle mx-auto mt-4"
                       style={{ width: '120px', height: '120px', objectFit: 'cover' }}
                     />
                     <div className="card-body">
                       <h5 className="card-title">{user.firstname} {user.lastname}</h5>
                       <p className="text-muted">{user.domain} - {user.specialty}</p>
-                      <p className="text-muted">Description : {user.description}</p>
+                      <p className="text-muted">Description: {user.description}</p>
                       <a
                         href={`http://localhost:3000/user-profile/${user.email}`}
                         target="_blank"
@@ -121,13 +140,6 @@ function List_person() {
                       >
                         View Profile
                       </a>
-                    </div>
-                    <div className="card-footer bg-white">
-                      <div className="d-flex justify-content-center">
-                        <a className="btn btn-outline-primary btn-sm mx-1"><FontAwesomeIcon icon={faTwitter} /></a>
-                        <a className="btn btn-outline-primary btn-sm mx-1"><FontAwesomeIcon icon={faFacebook} /></a>
-                        <a className="btn btn-outline-primary btn-sm mx-1"><FontAwesomeIcon icon={faLinkedin} /></a>
-                      </div>
                     </div>
                   </div>
                 </div>

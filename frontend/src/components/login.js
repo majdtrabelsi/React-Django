@@ -3,7 +3,7 @@ import '../styles/main.css';
 import '../styles/bootstrap.min.css';
 import Nav from './Navbar.js';
 import { useNavigate, useLocation } from 'react-router-dom';
-
+import Footer from './footer.js';
 function Login() {
   const [isLoading, setIsLoading] = useState(true);
   const [email, setEmail] = useState('');
@@ -183,6 +183,7 @@ function Login() {
   };
 
   return (
+    <>
     <div className="container-xxl bg-white p-0">
       <Nav />
       {isLoading ? (
@@ -278,6 +279,7 @@ function Login() {
         </div>
       )}
     </div>
+    <Footer /></>
   );
 }
 

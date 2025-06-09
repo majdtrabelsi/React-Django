@@ -97,7 +97,7 @@ function Rqoffer() {
                         <tr key={offer.id}>
                             <th scope="row">{index + 1}</th>
                             <td>
-                            <a href={`http://localhost:3000/user-profile/${offer.name_person}`} target="_blank" >
+                            <a href={`http://localhost:3000/user-profiles/${offer.name_person}`} target="_blank" >
                                 {offer.name_person}
                             </a>
                             </td>

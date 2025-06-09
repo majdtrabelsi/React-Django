@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import {Link} from 'react-router-dom';
 import '../../../styles/main.css';
-
+import logo from '../../../assets/images/skill_wave.png';
 function Nav_pro() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   
@@ -50,10 +50,9 @@ function Nav_pro() {
     };
   return (
     <nav className="navbar navbar-expand-lg navbar-light px-4 px-lg-5 py-3 py-lg-0">
-        <a href="#" className="navbar-brand p-0">
-        <h1 style={{color:'red'}} className="m-0">BizConsult</h1>
-        {/* <img src="assets/images/logo.png" alt="Logo" /> */}
-      </a>
+        <a href="/" className="navbar-brand p-0">
+                <img src={logo} height={100} width={120} alt="Logo" /> 
+              </a>
       <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
         <span className="fa fa-bars"></span>
       </button>
@@ -80,7 +79,7 @@ function Nav_pro() {
             <div className="dropdown-menu m-0">
             <Link to="/List-company-pro" className="dropdown-item">Company</Link>
             <Link to="/List-pro" className="dropdown-item">Person</Link>              
-            <Link to="/Offers-pro" className="dropdown-item">Offers</Link>
+            <Link to="/offer-pro" className="dropdown-item">Offers</Link>
               
               </div>
           </div>

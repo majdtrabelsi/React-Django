@@ -119,8 +119,8 @@ function Social() {
         </div>
       </div>
 
-      <div className="container text-center mt-4">
-        <div className="row g-4">
+      <div  className="container text-center mt-4">
+        <div style={{marginRight: '10em'}}className="row g-4">
           {Object.entries(links).map(([platform, url]) =>
             url && (
               <div className="col" key={platform}>

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Nav_pro from './Nav';
-import heroImage from '../../../assets/images/hero.png';
+
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faPhone, faGear,faLeftLong } from '@fortawesome/free-solid-svg-icons';
 import axios from 'axios';
@@ -26,7 +26,7 @@ function Cv() {
       .catch(err => console.error('Error fetching profile:', err));
   }, []);
 
-  const photoUrl = userProfile?.photo || heroImage;
+
 
   const fetchData = (type, setState) => {
     fetch('http://localhost:8000/api/accounts/accountstatus/', { credentials: 'include' })
@@ -63,13 +63,8 @@ function Cv() {
                 <FontAwesomeIcon icon={faGear} size="2x" />
               </Link>
             </div>
-            <img
-              src={photoUrl}
-              className="rounded-circle border border-3"
-              alt="Profile"
-              style={{ width: '10em', height: '10em', objectFit: 'cover' }}
-            />
-            <h2 className="mt-3 text-dark">{userProfile?.name || ''}</h2>
+            
+            <h2 className="mt-3 text-dark">Curriculum Vitae</h2>
             <div className="d-flex justify-content-center gap-3 mt-3">
             </div>
 

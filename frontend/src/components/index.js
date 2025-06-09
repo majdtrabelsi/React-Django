@@ -63,8 +63,11 @@ function HeroSection() {
       {/* Hero Section */}
       <div className="container-xxl bg-primary hero-header">
         <div className="container py-5">
+            
           <div className="row align-items-center">
+            
             <div className="col-lg-6 text-white">
+            <h3 style={{color: "black"}} className="mb-4">Skillwave is where professional growth meets dynamic networking – a wave of talent, always in motion.</h3>
               <h1 className="mb-4">Connect. Hire. Deliver.</h1>
               <p className="mb-4">
                 A professional space to find top freelancers, independent talent, or companies for one-time tasks or full projects. Pay once, get the job done — no fluff.

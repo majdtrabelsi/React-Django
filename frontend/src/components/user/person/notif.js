@@ -23,10 +23,13 @@ function Rqoffer() {
             setUserName(data.user);
     
             // Fetch offers only for this user
-            axios.get(`http://127.0.0.1:8000/api/accounts/api/rqoffers/?name_person=${data.user}`)
-                .then(response => setOffers(response.data))
-                .catch(error => console.error('Error fetching offers:', error));
-            } else {
+            axios.get(`http://127.0.0.1:8000/api/accounts/api/rqoffers/`)
+  .then(response => {
+    // Filter offers belonging to the current user
+    const filteredOffers = response.data.filter(offer => offer.name_person === data.user);
+    setOffers(filteredOffers);
+  })}
+ else {
             setIsAuthenticated(false);
             window.location.href = "./login";
             }
@@ -105,17 +108,22 @@ function Rqoffer() {
                                 <td>{offer.name_company}</td>
 
                                 <td>
-                                {offer.rp_offer}
                                 {offer.rp_offer === 'accept' && (
+                                    <>
+                                    ✅ Accept
                                     <button
-                                    
                                         className="btn btn-sm btn-outline-primary ms-2"
                                         onClick={() => goToChat(offer.id)}
                                     >
                                         <FontAwesomeIcon icon={faRocketchat} /> Chat
-                                  </button>
+                                    </button>
+                                    </>
                                 )}
+                                {offer.rp_offer === 'refuse' && '❌ Refused'}
+                                {!offer.rp_offer && '⏳ En attente'}
                                 </td>
+
+
                             </tr>
                             ))
                         ) : (

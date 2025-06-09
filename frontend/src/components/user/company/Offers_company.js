@@ -66,7 +66,7 @@ function Offer() {
           setCompanyName(matchingCompany.company_name);
         } else {
           console.warn('No matching company found for user ID:', userId);
-          setCompanyName('Unknown Company');
+          setCompanyName('Professional Account');
         }
       })
       .catch((error) => console.error('Error fetching company data:', error));

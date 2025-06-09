@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import Nav_company from './Nav.js';
+import Nav_pro from './Nav.js';
 import { Tab, Tabs, TabList, TabPanel } from 'react-tabs';
 import 'react-tabs/style/react-tabs.css';
-
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 
 import {
@@ -98,9 +97,9 @@ function UserProfileTabs() {
 
   return (
     <div className="container-xxl bg-white p-0">
-      <Nav_company />
+      <Nav_pro />
       <div className="container text-center py-5 bg-primary text-white">
-
+        
         <h2 style={{ marginTop: '1em' }}>{userProfile?.name || username}</h2>
       </div>
 

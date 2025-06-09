@@ -17,21 +17,21 @@ function List_person() {
   const [users, setUsers] = useState([]);
   const [filteredUsers, setFilteredUsers] = useState([]);
   const [selectedDomain, setSelectedDomain] = useState('');
-  const [profiles, setProfiles] = useState('');
+  const [profiles, setProfiles] = useState([]);
   const [selectedSpecialty, setSelectedSpecialty] = useState('');
-  
+
   useEffect(() => {
     axios.get('http://localhost:8000/api/accounts/work-profiles/', {
       withCredentials: true,
     })
       .then(response => {
-        setUsers(response.data);
-        setFilteredUsers(response.data);
+        setUsers(response.data); // only set users, not filteredUsers
       })
       .catch(error => {
         console.error('Error fetching work profiles:', error);
       });
   }, []);
+
   useEffect(() => {
     axios.get('http://localhost:8000/api/accounts/allprofiles/', {
       withCredentials: true,
@@ -45,25 +45,24 @@ function List_person() {
   }, []);
 
   useEffect(() => {
-    if (!selectedDomain && !selectedSpecialty) {
-      setFilteredUsers(users);
-    } else {
-      const filtered = users.filter(user =>
-        (!selectedDomain || user.domain === selectedDomain) &&
-        (!selectedSpecialty || user.specialty === selectedSpecialty)
-      );
-      setFilteredUsers(filtered);
-    }
+    const filtered = users.filter(user =>
+      user.specialty?.toLowerCase() !== "company" &&
+      (!selectedDomain || user.domain === selectedDomain) &&
+      (!selectedSpecialty || user.specialty === selectedSpecialty)
+    );
+    setFilteredUsers(filtered);
   }, [selectedDomain, selectedSpecialty, users]);
+
   const getPersonPhoto = (userId) => {
-      const profile = profiles.find((p) => p.user === userId);
-      if (profile && profile.photo) {
-        return profile.photo.startsWith('http')
-          ? profile.photo
-          : `http://localhost:8000${profile.photo}`;
-      }
-      return Team;
-    };
+    const profile = profiles.find((p) => p.user === userId);
+    if (profile && profile.photo) {
+      return profile.photo.startsWith('http')
+        ? profile.photo
+        : `http://localhost:8000${profile.photo}`;
+    }
+    return Team;
+  };
+
   return (
     <div className="container-xxl bg-white p-0">
       <div className="container-xxl position-relative p-0">
@@ -125,14 +124,14 @@ function List_person() {
                   <div className="card text-center shadow-sm border-0 h-100">
                     <img
                       src={getPersonPhoto(user.id)}
-                      alt="Company"
+                      alt="Profile"
                       className="card-img-top rounded-circle mx-auto mt-4"
                       style={{ width: '120px', height: '120px', objectFit: 'cover' }}
                     />
                     <div className="card-body">
                       <h5 className="card-title">{user.firstname} {user.lastname}</h5>
                       <p className="text-muted">{user.domain} - {user.specialty}</p>
-                      <p className="text-muted">Description : {user.description}</p>
+                      <p className="text-muted">Description: {user.description}</p>
                       <a
                         href={`http://localhost:3000/user-profile/${user.email}`}
                         target="_blank"
@@ -142,7 +141,6 @@ function List_person() {
                         View Profile
                       </a>
                     </div>
-                    
                   </div>
                 </div>
               ))

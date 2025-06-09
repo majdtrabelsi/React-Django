@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import Navbar from './Navbar'; // Optional: only import if you're using it
-
+import logo from '../assets/images/skill_wave.png';
 function ForgotPassword() {
   const [email, setEmail] = useState('');
   const [message, setMessage] = useState('');
@@ -33,9 +33,9 @@ function ForgotPassword() {
   return (
     <div>
       <div className="p-3">
-        <a href="/" className="navbar-brand p-0 text-decoration-none">
-          <h1 style={{ color: 'red', marginRight: '5em' }} className="m-0">BizConsult</h1>
-        </a>
+        <a href="/" className="navbar-brand p-0">
+                <img src={logo} height={100} width={120} alt="Logo" /> 
+              </a>
       </div>
 
       <div className="container mt-5" style={{ maxWidth: '500px' }}>

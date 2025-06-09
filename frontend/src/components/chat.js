@@ -11,7 +11,10 @@ function ChatPage() {
   const chatBoxRef = useRef(null);
   const [csrfToken, setCsrfToken] = useState('');
   const [chatClosed, setChatClosed] = useState(false);
+  const [owner, setOwner] = useState(false);
   const [userType, setUserType] = useState('');
+  const [userName, setUserName] = useState('');
+  const [userNames, setUserNames] = useState('');
   const messageSound = new Audio("https://www.soundjay.com/buttons/sounds/button-3.mp3");
   const [isMuted, setIsMuted] = useState(
     localStorage.getItem('chatMuted') === 'true'
@@ -38,11 +41,33 @@ function ChatPage() {
       .then(res => res.json())
       .then(data => {
         if (data.isAuthenticated) {
+          setUserName(data.user);
           setCurrentUserId(data.user_id);
           setUserType(data.userType);
         }
       });
   }, [csrfToken]);
+  useEffect(() => {
+    fetch('http://localhost:8000/api/accounts/api/rqoffers/', {
+      credentials: 'include',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken,
+      },
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (id == data.id) {
+          setUserNames(data.name_company);
+        }
+      });
+  }, [csrfToken]);
+
+  useEffect(() => {
+    if (userNames == userName) {
+      setOwner(true);
+    }
+  }, [userNames, userName]);
 
   useEffect(() => {
     fetch(`http://localhost:8000/api/accounts/chat-status/${id}/`, {
@@ -153,7 +178,9 @@ function ChatPage() {
     <div className="container py-4">
       <div className="d-flex justify-content-between align-items-center mb-3">
         <h4 className="mb-0">💬 Chat</h4>
-        {userType === 'company' && !chatClosed && (
+        {(!chatClosed && (
+          (userType === 'company') || (userType === 'professional' && owner)
+        )) && (
           <button
             className="btn btn-outline-danger"
             onClick={() => {
@@ -167,11 +194,13 @@ function ChatPage() {
               })
                 .then(() => setChatClosed(true))
                 .catch(console.error);
+                console.log("Sending CSRF:", csrfToken);
             }}
           >
             🛑 Close Chat
           </button>
         )}
+
         <button
   className={`btn btn-sm ${isMuted ? 'btn-secondary' : 'btn-success'} ms-2`}
   onClick={() => {

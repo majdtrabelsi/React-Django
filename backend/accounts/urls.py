@@ -31,7 +31,7 @@ router.register(r'rqoffers', RqofferViewSet, basename='rqoffer')
 
 
 
-from .views import work_profile_view,disable_2fa,send_reset_email,verify_reset_token,reset_password
+from .views import work_profile_view,disable_2fa,send_reset_email,verify_reset_token,reset_password,ApplyOfferView,ApplicationStatusView
 from django.urls import path
 from .views import LoginView,UserRegistrationProView,UserRegistrationPerView,UserRegistrationCompView,LogoutView,UserStatusView,contact_form,ProfileViewSet,CSRFTokenView
 from .views import social_media_links,ChangePasswordView,accountdatas,BillingHistoryView,payment,payment_success,list_work_profiles,verify_2fa_token,enable_2fa,setup_2fa
@@ -87,5 +87,7 @@ urlpatterns = [
     path('password-reset/confirm/', reset_password),
     path('password-reset/validate/', views.validate_reset_token),
     path('allprofiles/', views.all_profiles, name='all-profiles'),
+    path('apply-offer/', ApplyOfferView.as_view(), name='apply-offer'),
+    path('apply-status/', ApplicationStatusView.as_view(), name='apply-status')
 
 ]

@@ -300,3 +300,15 @@ class WorkProfile(models.Model):
 
     def __str__(self):
         return f"{self.user.email} - {self.domain}/{self.specialty}"
+
+
+
+# models.py
+
+class OfferApplication(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    offer_id = models.IntegerField()
+    applied_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.email} → Offer {self.offer_id}"

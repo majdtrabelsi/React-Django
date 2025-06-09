@@ -2,12 +2,13 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Navbar from './Navbar';
 import 'font-awesome/css/font-awesome.min.css';
-
+import Footer from './footer';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faUsers, faFile, faGear, faArrowUp } from '@fortawesome/free-solid-svg-icons';
 
 function Sign_up() {
   return (
+    <>
     <div className="container-xxl bg-white p-0">
       <Navbar />
 
@@ -109,6 +110,7 @@ function Sign_up() {
       <FontAwesomeIcon icon={faArrowUp} />
       </a>
     </div>
+    <Footer /></>
   );
 }
 

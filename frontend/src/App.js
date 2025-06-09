@@ -53,7 +53,7 @@ import Social_Comp from './components/user/company/social.js';
 import CookiesPolicy from './components/CookiesPolicy.js';
 
 
-
+import OfferPro from './components/user/pro/offers.js';
 
 
 
@@ -66,10 +66,10 @@ import ResetPassword from './components/ResetPassword';
 
 import ChoseDomain from './components/user/company/chose_domain_comp.js';
 
+import RqOffers from './components/user/pro/rq_offer.js';
 
-
-
-
+import UserProfiles from './components/user/pro/userProfiles.js';
+import AllOfferPro from './components/user/pro/all_offers.js';
 function App() {
   return (
     <Router>
@@ -137,7 +137,12 @@ function App() {
         <Route path="/terms" element={<TermsAndConditions />} />
         <Route path="/cookies" element={<CookiesPolicy />} />
         <Route path="/chose-domain-comp" element={<ChoseDomain />} />
-
+        <Route path="/offer-pro" element={<OfferPro />} />
+        <Route path="/offer-request/:id" element={<RqOffers />} />
+        <Route path="/user-profiles/:username" element={<UserProfiles />} />
+        <Route path="/All-Offers-Pro" element={<AllOfferPro />} />
+        
+        
       </Routes>
     </Router>
     

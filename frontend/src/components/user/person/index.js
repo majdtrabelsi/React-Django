@@ -7,11 +7,51 @@ import Nav_person from './nav';
 import axios from 'axios';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowUp } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faTimesCircle, faHourglassHalf } from '@fortawesome/free-solid-svg-icons';
+
 
 function HeroSection() {
   const [isLoading, setIsLoading] = useState(true);
   const [offers, setOffers] = useState([]);
   const navigate = useNavigate();
+  const [recentRequests, setRecentRequests] = useState([]);
+  const [userName, setUserName] = useState('');
+
+useEffect(() => {
+  fetch('http://localhost:8000/api/accounts/accountstatus/', {
+    credentials: 'include',
+  })
+    .then((res) => res.json())
+    .then((data) => {
+      if (!data?.isAuthenticated) {
+        navigate('/');
+      } else if (data.userType !== 'personal') {
+        navigate('/login');
+      } else {
+        setUserName(data.user);
+      }
+      setIsLoading(false);
+    })
+    .catch((error) => {
+      console.error('Error fetching authentication status:', error);
+      setIsLoading(false);
+    });
+}, [navigate]);
+
+useEffect(() => {
+  if (userName) {
+    axios
+      .get(`http://127.0.0.1:8000/api/accounts/api/rqoffers/?name_person=${userName}`, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        const sorted = res.data.sort((a, b) => new Date(b.id) - new Date(a.id)); // reverse order
+        setRecentRequests(sorted.slice(0, 3)); // latest 3 only
+      })
+      .catch((err) => console.error('Error fetching recent requests:', err));
+  }
+}, [userName]);
+
 
   useEffect(() => {
     fetch('http://localhost:8000/api/accounts/accountstatus/', {
@@ -125,6 +165,52 @@ function HeroSection() {
           </div>
         </div>
       </section>
+      {/* Recent Requests */}
+<section className="py-5 bg-light">
+  <div className="container">
+    <h4 className="text-center mb-4">📋 Your Last 3 Offer Requests</h4>
+    {recentRequests.length > 0 ? (
+      <div className="row justify-content-center">
+        {recentRequests.map((req, index) => (
+          <div key={req.id} className="col-md-4 mb-4">
+            <div className="card border-0 shadow-sm h-100">
+              <div className="card-body text-center">
+                <h6 className="text-muted">Company</h6>
+                <p className="fw-bold mb-1">{req.name_company}</p>
+                <h6 className="text-muted mb-2">Status</h6>
+                <p className="mb-0">
+                  {req.rp_offer === 'accept' && (
+                    <span className="text-success">
+                      <FontAwesomeIcon icon={faCheckCircle} className="me-1" /> Accepted
+                    </span>
+                  )}
+                  {req.rp_offer === 'refuse' && (
+                    <span className="text-danger">
+                      <FontAwesomeIcon icon={faTimesCircle} className="me-1" /> Refused
+                    </span>
+                  )}
+                  {!req.rp_offer && (
+                    <span className="text-warning">
+                      <FontAwesomeIcon icon={faHourglassHalf} className="me-1" /> En attente
+                    </span>
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+          
+        ))}
+      </div>
+      
+    ) : (
+      <p className="text-center text-muted">No recent requests yet.</p>
+    )}
+  </div>
+  <center>
+  <br />
+                <a href='/notif'><h6 className="btn btn-dark rounded-pill py-2 px-4 ms-lg-5">View ALL</h6></a></center>
+</section>
+
 
       {/* Footer */}
       <footer className="bg-primary text-white pt-5 pb-3 mt-5">

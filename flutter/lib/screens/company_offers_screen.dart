@@ -18,6 +18,8 @@ class _CompanyOffersScreenState extends State<CompanyOffersScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _hourController = TextEditingController();
 
   @override
   void initState() {
@@ -51,7 +53,7 @@ class _CompanyOffersScreenState extends State<CompanyOffersScreen> {
     }
   }
 
-  Future<void> createOffer(String title, String description) async {
+  Future<void> createOffer(String title, String description, String price, String hours) async {
     try {
       final csrfRes = await dio.get('/api/accounts/csrf/');
       final csrfToken = csrfRes.data['csrfToken'];
@@ -65,13 +67,13 @@ class _CompanyOffersScreenState extends State<CompanyOffersScreen> {
         data: {
           'title': title,
           'description': description,
-          'user_name': userName, // ✅ Add user_name here
+          'user_name': userName,
         },
         options: Options(headers: {'X-CSRFToken': csrfToken}),
       );
 
-      Navigator.pop(context); // Close the bottom sheet
-      fetchOffers(); // Refresh the list
+      Navigator.pop(context);
+      fetchOffers();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("❌ Failed to create offer.")),
@@ -114,12 +116,26 @@ class _CompanyOffersScreenState extends State<CompanyOffersScreen> {
                 validator: (value) =>
                     value == null || value.isEmpty ? 'Description required' : null,
               ),
+              TextFormField(
+                controller: _priceController,
+                decoration: const InputDecoration(labelText: 'Price'),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Price required' : null,
+              ),
+              TextFormField(
+                controller: _hourController,
+                decoration: const InputDecoration(labelText: 'Hours'),
+                validator: (value) =>
+                    value == null || value.isEmpty ? 'Hours required' : null,
+              ),
               ElevatedButton(
                 onPressed: () {
                   if (_formKey.currentState!.validate()) {
                     createOffer(
                       _titleController.text,
                       _descController.text,
+                      _priceController.text,
+                      _hourController.text,
                     );
                   }
                 },

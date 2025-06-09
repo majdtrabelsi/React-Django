@@ -288,3 +288,11 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = ['id', 'name', 'photo', 'user']
+
+
+from .models import OfferApplication
+
+class OfferApplicationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = OfferApplication
+        fields = ['id', 'user', 'offer_id', 'applied_at']

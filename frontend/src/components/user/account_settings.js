@@ -754,95 +754,135 @@ const SubscriptionManagement = ({ accountType, setActiveTab }) => {
   };  
   
   
+  const ChangePassword = () => {
+    const navigate = useNavigate();
+    const [formData, setFormData] = useState({
+      current_password: '',
+      new_password: '',
+      confirm_password: '',
+    });
+    const [message, setMessage] = useState('');
+    const [error, setError] = useState('');
   
-// === CHANGE PASSWORD ===
-const ChangePassword = () => {
-const navigate = useNavigate();
-const [formData, setFormData] = useState({
-  current_password: '',
-  new_password: '',
-  confirm_password: '',
-});
-const [message, setMessage] = useState('');
-const [error, setError] = useState('');
-
-const handleChange = (e) => {
-  setFormData({ ...formData, [e.target.name]: e.target.value });
-};
-
-const handlePasswordChange = async (e) => {
-  e.preventDefault();
-  setMessage('');
-  setError('');
-
-  if (formData.new_password !== formData.confirm_password) {
-    setError('New passwords do not match.');
-    return;
-  }
-
-  try {
-    const csrfRes = await fetch("http://localhost:8000/api/accounts/csrf/", {
-      credentials: 'include',
-    });
-
-    const csrfData = await csrfRes.json();
-    const csrfToken = csrfData.csrfToken;
-
-    const res = await fetch("http://localhost:8000/api/accounts/change-password/", {
-      method: "POST",
-      credentials: "include",
-      headers: {
-        "X-CSRFToken": csrfToken,
-      },
-      body: JSON.stringify(formData),
-    });
-
-    const data = await res.json();
-
-    if (res.ok) {
-      setMessage(data.message || "Password changed successfully.");
-      setFormData({
-        current_password: '',
-        new_password: '',
-        confirm_password: '',
-      });
-      setTimeout(() => {
-        navigate('/login');
-      }, 3000);
-    } else {
-      const errors = Object.values(data).flat().join(" ");
-      setError(errors || "Failed to update password.");
-    }
-  } catch (err) {
-    setError("An error occurred. Please try again.");
-    console.error(err);
-  }
-};
-
-return (
-  <div>
-    <h3>Change Password</h3>
-    <form onSubmit={handlePasswordChange} className="w-50">
-      <div className="mb-3">
-        <label className="form-label">Current Password</label>
-        <input type="password" name="current_password" className="form-control" value={formData.current_password} onChange={handleChange} required />
+    const handleChange = (e) => {
+      setFormData({ ...formData, [e.target.name]: e.target.value });
+    };
+  
+    const validatePassword = (password) => {
+      const regex =
+        /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
+      return regex.test(password);
+    };
+  
+    const handlePasswordChange = async (e) => {
+      e.preventDefault();
+      setMessage('');
+      setError('');
+  
+      if (formData.new_password !== formData.confirm_password) {
+        setError('New passwords do not match.');
+        return;
+      }
+  
+      if (!validatePassword(formData.new_password)) {
+        setError(
+          'Password must be at least 8 characters long and include uppercase, lowercase, a number, and a special character.'
+        );
+        return;
+      }
+  
+      try {
+        const csrfRes = await fetch(
+          'http://localhost:8000/api/accounts/csrf/',
+          { credentials: 'include' }
+        );
+  
+        const csrfData = await csrfRes.json();
+        const csrfToken = csrfData.csrfToken;
+  
+        const res = await fetch(
+          'http://localhost:8000/api/accounts/change-password/',
+          {
+            method: 'POST',
+            credentials: 'include',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRFToken': csrfToken,
+            },
+            body: JSON.stringify(formData),
+          }
+        );
+  
+        const data = await res.json();
+  
+        if (res.ok) {
+          setMessage(data.message || 'Password changed successfully.');
+          setFormData({
+            current_password: '',
+            new_password: '',
+            confirm_password: '',
+          });
+          setTimeout(() => {
+            navigate('/login');
+          }, 3000);
+        } else {
+          const errors = Object.values(data).flat().join(' ');
+          setError(errors || 'Failed to update password.');
+        }
+      } catch (err) {
+        setError('An error occurred. Please try again.');
+        console.error(err);
+      }
+    };
+  
+    return (
+      <div>
+        <h3>Change Password</h3>
+        <form onSubmit={handlePasswordChange} className="w-50">
+          <div className="mb-3">
+            <label className="form-label">Current Password</label>
+            <input
+              type="password"
+              name="current_password"
+              className="form-control"
+              value={formData.current_password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">New Password</label>
+            <input
+              type="password"
+              name="new_password"
+              className="form-control"
+              value={formData.new_password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <div className="mb-3">
+            <label className="form-label">Confirm New Password</label>
+            <input
+              type="password"
+              name="confirm_password"
+              className="form-control"
+              value={formData.confirm_password}
+              onChange={handleChange}
+              required
+            />
+          </div>
+          <button type="submit" className="btn btn-primary">
+            Update Password
+          </button>
+        </form>
+  
+        {message && <div className="alert alert-success mt-4">{message}</div>}
+        {error && <div className="alert alert-danger mt-4">{error}</div>}
       </div>
-      <div className="mb-3">
-        <label className="form-label">New Password</label>
-        <input type="password" name="new_password" className="form-control" value={formData.new_password} onChange={handleChange} required />
-      </div>
-      <div className="mb-3">
-        <label className="form-label">Confirm New Password</label>
-        <input type="password" name="confirm_password" className="form-control" value={formData.confirm_password} onChange={handleChange} required />
-      </div>
-      <button type="submit" className="btn btn-primary">Update Password</button>
-    </form>
-
-    {message && <div className="alert alert-success mt-4">{message}</div>}
-    {error && <div className="alert alert-danger mt-4">{error}</div>}
-  </div>
-);
-};
+    );
+  };
+  
 const TwoFATab = () => {
   const [enabled, setEnabled] = useState(false);
   const [qrData, setQrData] = useState(null);
@@ -868,7 +908,7 @@ const TwoFATab = () => {
   }, []);
 
   const fetchQR = () => {
-    fetch('http://localhost:8000/api/accounts/setup-2fa/', {
+    fetch('http://localhost:8000/api/accounts/setup_2fa/', {
       credentials: 'include',
     })
       .then(res => res.json())
@@ -876,7 +916,7 @@ const TwoFATab = () => {
   };
 
   const handleEnable = () => {
-    fetch('http://localhost:8000/api/accounts/enable-2fa/', {
+    fetch('http://localhost:8000/api/accounts/enable_2fa/', {
       method: 'POST',
       credentials: 'include',
       headers: {

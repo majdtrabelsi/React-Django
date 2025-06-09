@@ -1,7 +1,7 @@
 
 import React, { useEffect,useState } from 'react';
 import {Link, useNavigate} from 'react-router-dom';
-
+import logo from '../assets/images/skill_wave.png';
 import '../styles/main.css';
 import '../styles/bootstrap.min.css';
 function Navbar() {
@@ -54,9 +54,8 @@ function Navbar() {
   };
   return (
     <nav className="navbar navbar-expand-lg navbar-light px-4 px-lg-5 py-3 py-lg-0">
-      <a href="/" className="navbar-brand p-0">
-        <h1 style={{color:'red'}} className="m-0">BizConsult</h1>
-        {/* <img src="assets/images/logo.png" alt="Logo" /> */}
+      <a href="" className="navbar-brand p-0">
+        <img src={logo} height={120} width={140} alt="Logo" /> 
       </a>
       <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarCollapse">
         <span className="fa fa-bars"></span>

@@ -28,7 +28,7 @@ function SignUpCompany() {
     if (name === 'email') setEmail(value);
     else if (name === 'password') {
       setPassword(value);
-      const strength = checkPasswordStrength(value); // 👈 update strength
+      const strength = checkPasswordStrength(value);
       setPasswordStrength(strength);
     }
     else if (name === 'confirmPassword') setConfirmPassword(value);

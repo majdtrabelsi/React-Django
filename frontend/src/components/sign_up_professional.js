@@ -83,8 +83,8 @@ function Register() {
         
         if (loginResponse.ok) {
           // ✅ Logged in successfully
-          //navigate('/payment', { state: { plan: 'professional' } });
-          navigate('/select-domain');
+          navigate('/payment', { state: { plan: 'professional' } });
+          //navigate('/select-domain');
         }
       } else {
         console.log('Error:', responseData);

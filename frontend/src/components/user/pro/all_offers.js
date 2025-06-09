@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
-import Nav_person from './nav';
+import Nav_pro from './Nav';
 
-function Offers() {
+function AllOffers() {
   const [offers, setOffers] = useState([]);
   const [company_name, setCompanyName] = useState([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -109,7 +109,7 @@ function Offers() {
 
   return (
     <div className="container-xxl bg-white p-0">
-      <Nav_person />
+      <Nav_pro />
 
       {/* Page Header */}
       <div className="container-xxl bg-primary py-5 text-center text-white">
@@ -184,4 +184,4 @@ function Offers() {
   );
 }
 
-export default Offers;
+export default AllOffers;
